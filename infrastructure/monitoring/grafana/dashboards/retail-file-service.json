@@ -44,7 +44,7 @@
         "type": "stat",
         "targets": [
           {
-            "expr": "retail_files_created_total",
+            "expr": "retail_files_total",
             "legendFormat": "Files Created"
           }
         ],

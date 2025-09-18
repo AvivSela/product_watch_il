@@ -75,6 +75,6 @@ info:
     version: 1.0.0
     environment: development
   java:
-    version: @java.version@
+    version: 17
   build:
-    time: @maven.build.timestamp@
+    time: 2024-01-01

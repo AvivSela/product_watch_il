@@ -5,26 +5,16 @@
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-        <parent>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-parent</artifactId>
-            <version>3.3.6</version>
-            <relativePath/>
-        </parent>
+    <parent>
+        <groupId>com.avivse</groupId>
+        <artifactId>product-watch-platform</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../root-pom.xml</relativePath>
+    </parent>
 
-    <groupId>com.avivse</groupId>
     <artifactId>retail-file-service</artifactId>
-    <version>1.0.0</version>
     <name>retail-file-service</name>
     <description>Retail File Management Microservice</description>
-
-    <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- Explicitly override logback version for security -->
-        <logback.version>1.5.12</logback.version>
-    </properties>
 
     <dependencies>
         <!-- Spring Boot Web Starter - for REST APIs -->
@@ -62,7 +52,6 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.2.0</version>
         </dependency>
 
         <dependency>

@@ -4,13 +4,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Spring Boot microservice for retail file management, currently undergoing migration to a monorepo structure. The project uses Maven for build management and includes integrated monitoring with Prometheus and Grafana.
+This is a **monorepo** for the Product Watch Platform containing multiple microservices. The project uses Maven for build management with a multi-module structure and includes integrated monitoring with Prometheus and Grafana.
+
+## Monorepo Structure
+
+```
+product-watch-platform/
+├── services/
+│   └── retail-file-service/          # Spring Boot microservice for retail file management
+├── shared/
+│   ├── common-dto/                   # Shared DTOs across services
+│   ├── common-exceptions/            # Shared exception handling
+│   └── common-monitoring/            # Shared monitoring utilities
+├── infrastructure/
+│   └── monitoring/                   # Prometheus and Grafana configurations
+├── tools/scripts/                    # Build and utility scripts
+├── docs/                            # Documentation
+├── root-pom.xml                     # Root parent POM for all modules
+└── docker-compose.yml               # Local development stack
+```
 
 ## Development Commands
 
-### Build and Run
+### Root Level (All Services)
 ```bash
-# Build the project
+# Build all modules
+mvn clean compile -f root-pom.xml
+
+# Run tests for all modules
+mvn test -f root-pom.xml
+
+# Package all modules
+mvn clean package -f root-pom.xml
+```
+
+### Individual Service
+```bash
+# Navigate to service directory
+cd services/retail-file-service
+
+# Build the service
 mvn clean compile
 
 # Run tests
@@ -25,7 +58,7 @@ mvn clean package
 
 ### Testing
 ```bash
-# Run all tests
+# Run all tests (from service directory)
 mvn test
 
 # Run specific test class
@@ -37,7 +70,7 @@ mvn test -Dtest=RetailFileIntegrationTest
 
 ### Monitoring Stack
 ```bash
-# Start Prometheus and Grafana
+# Start Prometheus and Grafana (from root)
 docker-compose up -d
 
 # Stop monitoring stack
@@ -46,7 +79,10 @@ docker-compose down
 
 ## Architecture
 
-### Service Structure
+### Current Services
+- **retail-file-service**: Spring Boot microservice for managing retail file uploads
+
+### Service Structure (retail-file-service)
 - **Main Application**: `RetailFileServiceApplication.java` - Standard Spring Boot entry point
 - **Controller Layer**: REST endpoints in `controller/` package
 - **Service Layer**: Business logic in `service/` package
@@ -57,34 +93,47 @@ docker-compose down
 
 ### Key Technologies
 - **Framework**: Spring Boot 3.3.6 with Java 17
+- **Build Tool**: Maven (multi-module)
 - **Database**: H2 in-memory (development)
 - **Monitoring**: Micrometer + Prometheus + Grafana
 - **API Documentation**: SpringDoc OpenAPI
 - **Testing**: JUnit with Spring Boot Test
 
 ### Configuration
-- **Application**: `application.yml` contains all service configuration
+- **Application**: `services/retail-file-service/src/main/resources/application.yml`
 - **Database**: H2 console available at `/h2-console` (development)
 - **Metrics**: Available at `/actuator/prometheus`
 - **Health**: Available at `/actuator/health`
 
-## Monorepo Migration
+## Maven Multi-Module Configuration
 
-This repository is being migrated to a monorepo structure as outlined in `MONOREPO_MIGRATION_PLAN.md`. The target structure will include:
-- `services/` - Individual microservices
-- `shared/` - Common libraries and DTOs
-- `infrastructure/` - Monitoring, Docker, and deployment configs
-- `tools/` - Build scripts and utilities
+The project uses a parent POM (`root-pom.xml`) that manages:
+- Dependency versions across all modules
+- Plugin configurations
+- Build profiles
+- Module declarations
+
+All services inherit from this parent POM for consistent configuration.
+
+## Adding New Services
+
+When adding new microservices:
+1. Create directory under `services/`
+2. Add module to `root-pom.xml`
+3. Inherit from parent POM in service POM
+4. Follow established package structure
+5. Use shared modules for common functionality
 
 ## Important Notes
 
 ### Ports
-- **Application**: 8080 (Spring Boot default)
+- **retail-file-service**: 8080
 - **Prometheus**: 9090
 - **Grafana**: 3000 (admin/admin)
 
 ### Package Structure
-All code follows the base package `com.avivse.retailfileservice` with standard Spring Boot conventions.
+- **retail-file-service**: `com.avivse.retailfileservice` base package
+- **Shared modules**: Follow `com.avivse.shared.*` pattern
 
 ### Actuator Endpoints
 Management endpoints exposed: health, info, metrics, prometheus, env, loggers
