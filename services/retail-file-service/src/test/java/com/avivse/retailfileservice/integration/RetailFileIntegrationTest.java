@@ -3,6 +3,7 @@ package com.avivse.retailfileservice.integration;
 import com.avivse.retailfileservice.dto.CreateRetailFileRequest;
 import com.avivse.retailfileservice.dto.UpdateRetailFileRequest;
 import com.avivse.retailfileservice.entity.RetailFile;
+import com.avivse.retailfileservice.enums.FileProcessingStatus;
 import com.avivse.retailfileservice.repository.RetailFileRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,7 +60,7 @@ class RetailFileIntegrationTest {
         request.setFileUrl("https://example.com/integration_test.csv");
         request.setFileSize(1024L);
         request.setUploadDate(LocalDateTime.of(2024, 1, 15, 10, 30));
-        request.setIsProcessed(false);
+        request.setStatus(FileProcessingStatus.PENDING);
 
         // When
         MvcResult result = mockMvc.perform(post("/v1/retail-files")
@@ -68,7 +69,7 @@ class RetailFileIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.chain_id").value("chain_001"))
                 .andExpect(jsonPath("$.file_name").value("integration_test.csv"))
-                .andExpect(jsonPath("$.is_processed").value(false))
+                .andExpect(jsonPath("$.status").value("PENDING"))
                 .andReturn();
 
         // Then - Verify in database
@@ -79,7 +80,7 @@ class RetailFileIntegrationTest {
         assertNotNull(savedFile);
         assertEquals("chain_001", savedFile.getChainId());
         assertEquals("integration_test.csv", savedFile.getFileName());
-        assertEquals(false, savedFile.getIsProcessed());
+        assertEquals(FileProcessingStatus.PENDING, savedFile.getStatus());
         assertEquals(1024L, savedFile.getFileSize());
         assertNotNull(savedFile.getId());
     }
@@ -89,9 +90,9 @@ class RetailFileIntegrationTest {
     @Transactional
     void listRetailFiles_ShouldApplyFilters() throws Exception {
         // Given
-        createTestFile("chain_001", 123, "file1.csv", false);
-        createTestFile("chain_001", 124, "file2.csv", true);
-        createTestFile("chain_002", 125, "file3.csv", false);
+        createTestFile("chain_001", 123, "file1.csv", FileProcessingStatus.PENDING);
+        createTestFile("chain_001", 124, "file2.csv", FileProcessingStatus.COMPLETED);
+        createTestFile("chain_002", 125, "file3.csv", FileProcessingStatus.PENDING);
 
         // When & Then - Filter by chainId
         mockMvc.perform(get("/v1/retail-files")
@@ -102,7 +103,7 @@ class RetailFileIntegrationTest {
 
         // When & Then - Filter by processing status
         mockMvc.perform(get("/v1/retail-files")
-                        .param("isProcessed", "false"))
+                        .param("status", "PENDING"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data", hasSize(2)))
                 .andExpect(jsonPath("$.pagination.total").value(2));
@@ -112,13 +113,13 @@ class RetailFileIntegrationTest {
     @Transactional
     void updateRetailFile_ShouldUpdateInDatabase() throws Exception {
         // Given - Create file in database
-        RetailFile originalFile = createTestFile("chain_001", 123, "original.csv", false);
+        RetailFile originalFile = createTestFile("chain_001", 123, "original.csv", FileProcessingStatus.PENDING);
         Long originalFileSize = originalFile.getFileSize();
-        Boolean originalProcessed = originalFile.getIsProcessed();
+        FileProcessingStatus originalStatus = originalFile.getStatus();
 
         UpdateRetailFileRequest updateRequest = new UpdateRetailFileRequest();
         updateRequest.setFileSize(4096L);
-        updateRequest.setIsProcessed(true);
+        updateRequest.setStatus(FileProcessingStatus.COMPLETED);
 
         // When
         mockMvc.perform(put("/v1/retail-files/{id}", originalFile.getId())
@@ -126,19 +127,19 @@ class RetailFileIntegrationTest {
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.file_size").value(4096))
-                .andExpect(jsonPath("$.is_processed").value(true))
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
                 .andExpect(jsonPath("$.file_name").value("original.csv"));
 
         // Then - Verify in database
         RetailFile updatedFile = retailFileRepository.findById(originalFile.getId()).orElse(null);
         assertNotNull(updatedFile);
         assertEquals(4096L, updatedFile.getFileSize());
-        assertEquals(true, updatedFile.getIsProcessed());
+        assertEquals(FileProcessingStatus.COMPLETED, updatedFile.getStatus());
         assertEquals("original.csv", updatedFile.getFileName());
 
         // Verify the values actually changed
         assertNotEquals(originalFileSize, updatedFile.getFileSize());
-        assertNotEquals(originalProcessed, updatedFile.getIsProcessed());
+        assertNotEquals(originalStatus, updatedFile.getStatus());
     }
 
 
@@ -146,7 +147,7 @@ class RetailFileIntegrationTest {
     @Transactional
     void deleteRetailFile_ShouldRemoveFromDatabase() throws Exception {
         // Given
-        RetailFile file = createTestFile("chain_001", 123, "delete_test.csv", false);
+        RetailFile file = createTestFile("chain_001", 123, "delete_test.csv", FileProcessingStatus.PENDING);
         UUID fileId = file.getId();
 
         // When
@@ -159,7 +160,7 @@ class RetailFileIntegrationTest {
 
 
     // Helper method to create test files in database
-    private RetailFile createTestFile(String chainId, Integer storeId, String fileName, Boolean isProcessed) {
+    private RetailFile createTestFile(String chainId, Integer storeId, String fileName, FileProcessingStatus status) {
         RetailFile file = new RetailFile();
         file.setChainId(chainId);
         file.setStoreId(storeId);
@@ -167,7 +168,7 @@ class RetailFileIntegrationTest {
         file.setFileUrl("https://example.com/" + fileName);
         file.setFileSize(1024L);
         file.setUploadDate(LocalDateTime.now());
-        file.setIsProcessed(isProcessed);
+        file.setStatus(status);
         return retailFileRepository.save(file);
     }
 }

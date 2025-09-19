@@ -1,5 +1,8 @@
 package com.avivse.retailfileservice.entity;
 
+import com.avivse.retailfileservice.enums.FileProcessingStatus;
+import com.avivse.retailfileservice.validation.ValidFileType;
+import com.avivse.retailfileservice.validation.ValidUrl;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -36,11 +39,13 @@ public class RetailFile {
 
     @NotBlank(message = "File name is required")
     @Size(max = 255, message = "File name cannot exceed 255 characters")
+    @ValidFileType
     @Column(name = "file_name", nullable = false, length = 255)
     private String fileName;
 
     @NotBlank(message = "File URL is required")
     @Size(max = 500, message = "File URL cannot exceed 500 characters")
+    @ValidUrl
     @Column(name = "file_url", nullable = false, length = 500)
     private String fileUrl;
 
@@ -52,8 +57,12 @@ public class RetailFile {
     private LocalDateTime uploadDate;
 
     @NotNull(message = "Processing status is required")
-    @Column(name = "is_processed", nullable = false)
-    private Boolean isProcessed = false;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private FileProcessingStatus status = FileProcessingStatus.PENDING;
+
+    @Column(name = "checksum", length = 64)
+    private String checksum;
 
     // Default constructor (required by JPA)
     public RetailFile() {
@@ -65,7 +74,7 @@ public class RetailFile {
         this.fileName = fileName;
         this.fileUrl = fileUrl;
         this.uploadDate = uploadDate;
-        this.isProcessed = false;
+        this.status = FileProcessingStatus.PENDING;
     }
 
     // Getters and Setters
@@ -141,11 +150,19 @@ public class RetailFile {
         this.uploadDate = uploadDate;
     }
 
-    public Boolean getIsProcessed() {
-        return isProcessed;
+    public FileProcessingStatus getStatus() {
+        return status;
     }
 
-    public void setIsProcessed(Boolean isProcessed) {
-        this.isProcessed = isProcessed;
+    public void setStatus(FileProcessingStatus status) {
+        this.status = status;
+    }
+
+    public String getChecksum() {
+        return checksum;
+    }
+
+    public void setChecksum(String checksum) {
+        this.checksum = checksum;
     }
 }

@@ -3,6 +3,7 @@ package com.avivse.retailfileservice.controller;
 import com.avivse.retailfileservice.dto.CreateRetailFileRequest;
 import com.avivse.retailfileservice.dto.UpdateRetailFileRequest;
 import com.avivse.retailfileservice.entity.RetailFile;
+import com.avivse.retailfileservice.enums.FileProcessingStatus;
 import com.avivse.retailfileservice.service.RetailFileService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +56,7 @@ class RetailFileControllerTest {
         testRetailFile.setFileUrl("https://example.com/test_file.csv");
         testRetailFile.setFileSize(1024L);
         testRetailFile.setUploadDate(LocalDateTime.of(2024, 1, 15, 10, 30));
-        testRetailFile.setIsProcessed(false);
+        testRetailFile.setStatus(FileProcessingStatus.PENDING);
         testRetailFile.setCreatedAt(LocalDateTime.now());
         testRetailFile.setUpdatedAt(LocalDateTime.now());
     }
@@ -69,7 +70,7 @@ class RetailFileControllerTest {
         createRequest.setFileName("test_file.csv");
         createRequest.setFileUrl("https://example.com/test_file.csv");
         createRequest.setFileSize(1024L);
-        createRequest.setIsProcessed(false);
+        createRequest.setStatus(FileProcessingStatus.PENDING);
 
         when(retailFileService.createRetailFile(any(CreateRetailFileRequest.class)))
                 .thenReturn(testRetailFile);
@@ -82,7 +83,7 @@ class RetailFileControllerTest {
                 .andExpect(jsonPath("$.id").value(testId.toString()))
                 .andExpect(jsonPath("$.chain_id").value("chain_001"))
                 .andExpect(jsonPath("$.file_name").value("test_file.csv"))
-                .andExpect(jsonPath("$.is_processed").value(false));
+                .andExpect(jsonPath("$.status").value("PENDING"));
 
         verify(retailFileService, times(1)).createRetailFile(any(CreateRetailFileRequest.class));
     }
@@ -158,18 +159,18 @@ class RetailFileControllerTest {
         List<RetailFile> files = List.of(testRetailFile);
         Page<RetailFile> page = new PageImpl<>(files);
 
-        when(retailFileService.findAllWithFilters("chain_001", 123, false, 1, 20))
+        when(retailFileService.findAllWithFilters("chain_001", 123, FileProcessingStatus.PENDING, 1, 20))
                 .thenReturn(page);
 
         // When & Then
         mockMvc.perform(get("/v1/retail-files")
                         .param("chainId", "chain_001")
                         .param("storeId", "123")
-                        .param("isProcessed", "false"))
+                        .param("status", "PENDING"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1));
 
-        verify(retailFileService, times(1)).findAllWithFilters("chain_001", 123, false, 1, 20);
+        verify(retailFileService, times(1)).findAllWithFilters("chain_001", 123, FileProcessingStatus.PENDING, 1, 20);
     }
 
     @Test
@@ -177,10 +178,10 @@ class RetailFileControllerTest {
         // Given - create update request locally
         UpdateRetailFileRequest updateRequest = new UpdateRetailFileRequest();
         updateRequest.setFileSize(2048L);
-        updateRequest.setIsProcessed(true);
+        updateRequest.setStatus(FileProcessingStatus.COMPLETED);
 
         testRetailFile.setFileSize(2048L);
-        testRetailFile.setIsProcessed(true);
+        testRetailFile.setStatus(FileProcessingStatus.COMPLETED);
 
         when(retailFileService.updateRetailFile(eq(testId), any(UpdateRetailFileRequest.class)))
                 .thenReturn(testRetailFile);
@@ -191,7 +192,7 @@ class RetailFileControllerTest {
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.file_size").value(2048))
-                .andExpect(jsonPath("$.is_processed").value(true));
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
 
         verify(retailFileService, times(1)).updateRetailFile(eq(testId), any(UpdateRetailFileRequest.class));
     }
@@ -201,10 +202,10 @@ class RetailFileControllerTest {
         // Given - create update request locally
         UpdateRetailFileRequest updateRequest = new UpdateRetailFileRequest();
         updateRequest.setFileSize(2048L);
-        updateRequest.setIsProcessed(true);
+        updateRequest.setStatus(FileProcessingStatus.COMPLETED);
 
         when(retailFileService.updateRetailFile(eq(testId), any(UpdateRetailFileRequest.class)))
-                .thenReturn(null);
+                .thenThrow(new com.avivse.retailfileservice.exception.RetailFileNotFoundException("Retail file not found with id: " + testId));
 
         // When & Then
         mockMvc.perform(put("/v1/retail-files/{id}", testId)
@@ -242,14 +243,15 @@ class RetailFileControllerTest {
     @Test
     void markFileAsProcessed_ShouldReturn200_WhenFileExists() throws Exception {
         // Given
-        testRetailFile.setIsProcessed(true);
-        when(retailFileService.markAsProcessed(testId)).thenReturn(testRetailFile);
+        testRetailFile.setStatus(FileProcessingStatus.COMPLETED);
+        when(retailFileService.updateFileStatus(testId, FileProcessingStatus.COMPLETED)).thenReturn(testRetailFile);
 
         // When & Then
-        mockMvc.perform(patch("/v1/retail-files/{id}/process", testId))
+        mockMvc.perform(patch("/v1/retail-files/{id}/status", testId)
+                        .param("status", "COMPLETED"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.is_processed").value(true));
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
 
-        verify(retailFileService, times(1)).markAsProcessed(testId);
+        verify(retailFileService, times(1)).updateFileStatus(testId, FileProcessingStatus.COMPLETED);
     }
 }
