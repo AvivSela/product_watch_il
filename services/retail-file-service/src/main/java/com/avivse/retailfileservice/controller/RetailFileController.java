@@ -3,6 +3,7 @@ package com.avivse.retailfileservice.controller;
 import com.avivse.retailfileservice.dto.CreateRetailFileRequest;
 import com.avivse.retailfileservice.dto.UpdateRetailFileRequest;
 import com.avivse.retailfileservice.entity.RetailFile;
+import com.avivse.retailfileservice.enums.FileProcessingStatus;
 import com.avivse.retailfileservice.exception.RetailFileNotFoundException;
 import com.avivse.retailfileservice.service.RetailFileService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -63,7 +64,7 @@ public class RetailFileController {
     public ResponseEntity<Map<String, Object>> listRetailFiles(
             @RequestParam(required = false) String chainId,
             @RequestParam(required = false) Integer storeId,
-            @RequestParam(required = false) Boolean isProcessed,
+            @RequestParam(required = false) FileProcessingStatus status,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit) {
 
@@ -72,7 +73,7 @@ public class RetailFileController {
         if (limit < 1 || limit > 100) limit = 20;
 
         Page<RetailFile> result = retailFileService.findAllWithFilters(
-                chainId, storeId, isProcessed, page, limit);
+                chainId, storeId, status, page, limit);
 
         // Build response according to API specification
         Map<String, Object> response = new HashMap<>();
@@ -120,15 +121,34 @@ public class RetailFileController {
     }
 
     /**
-     * PATCH /v1/retail-files/{id}/process - Mark file as processed
+     * PATCH /v1/retail-files/{id}/status - Update file processing status
      */
-    @PatchMapping("/{id}/process")
-    public ResponseEntity<RetailFile> markFileAsProcessed(@PathVariable UUID id) {
-        RetailFile result = retailFileService.markAsProcessed(id);
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<RetailFile> updateFileStatus(
+            @PathVariable UUID id,
+            @RequestParam FileProcessingStatus status) {
 
-        if (result == null) {
-            throw RetailFileNotFoundException.forId(id.toString());
-        }
+        RetailFile result = retailFileService.updateFileStatus(id, status);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * GET /v1/retail-files/duplicates/check - Check for duplicate files
+     */
+    @GetMapping("/duplicates/check")
+    public ResponseEntity<Map<String, Boolean>> checkDuplicates(
+            @RequestParam String chainId,
+            @RequestParam String fileName,
+            @RequestParam String fileUrl,
+            @RequestParam(required = false) String checksum) {
+
+        boolean isDuplicateByMetadata = retailFileService.isDuplicateFile(chainId, fileName, fileUrl);
+        boolean isDuplicateByChecksum = checksum != null && retailFileService.isDuplicateFileByChecksum(checksum);
+
+        Map<String, Boolean> result = new HashMap<>();
+        result.put("duplicateByMetadata", isDuplicateByMetadata);
+        result.put("duplicateByChecksum", isDuplicateByChecksum);
+        result.put("isDuplicate", isDuplicateByMetadata || isDuplicateByChecksum);
 
         return ResponseEntity.ok(result);
     }

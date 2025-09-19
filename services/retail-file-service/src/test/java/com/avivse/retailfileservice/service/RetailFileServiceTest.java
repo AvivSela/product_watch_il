@@ -3,6 +3,7 @@ package com.avivse.retailfileservice.service;
 import com.avivse.retailfileservice.dto.CreateRetailFileRequest;
 import com.avivse.retailfileservice.dto.UpdateRetailFileRequest;
 import com.avivse.retailfileservice.entity.RetailFile;
+import com.avivse.retailfileservice.enums.FileProcessingStatus;
 import com.avivse.retailfileservice.repository.RetailFileRepository;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +55,7 @@ class RetailFileServiceTest {
         testRetailFile.setFileUrl("https://example.com/test_file.csv");
         testRetailFile.setFileSize(1024L);
         testRetailFile.setUploadDate(LocalDateTime.of(2024, 1, 15, 10, 30));
-        testRetailFile.setIsProcessed(false);
+        testRetailFile.setStatus(FileProcessingStatus.PENDING);
         testRetailFile.setCreatedAt(LocalDateTime.now());
         testRetailFile.setUpdatedAt(LocalDateTime.now());
 
@@ -66,12 +67,12 @@ class RetailFileServiceTest {
         createRequest.setFileUrl("https://example.com/test_file.csv");
         createRequest.setFileSize(1024L);
         createRequest.setUploadDate(LocalDateTime.of(2024, 1, 15, 10, 30));
-        createRequest.setIsProcessed(false);
+        createRequest.setStatus(FileProcessingStatus.PENDING);
 
         // Create test UpdateRetailFileRequest
         updateRequest = new UpdateRetailFileRequest();
         updateRequest.setFileSize(2048L);
-        updateRequest.setIsProcessed(true);
+        updateRequest.setStatus(FileProcessingStatus.COMPLETED);
 
         // Create a real SimpleMeterRegistry for metrics
         meterRegistry = new SimpleMeterRegistry();
@@ -92,7 +93,7 @@ class RetailFileServiceTest {
         assertNotNull(result);
         assertEquals("chain_001", result.getChainId());
         assertEquals("test_file.csv", result.getFileName());
-        assertEquals(false, result.getIsProcessed());
+        assertEquals(FileProcessingStatus.PENDING, result.getStatus());
 
         verify(retailFileRepository, times(1)).save(any(RetailFile.class));
     }
@@ -101,7 +102,7 @@ class RetailFileServiceTest {
     void createRetailFile_ShouldSetDefaultValues_WhenNotProvided() {
         // Given
         createRequest.setUploadDate(null);
-        createRequest.setIsProcessed(null);
+        createRequest.setStatus(null);
 
         when(retailFileRepository.save(any(RetailFile.class))).thenReturn(testRetailFile);
 
@@ -149,18 +150,18 @@ class RetailFileServiceTest {
         Page<RetailFile> page = new PageImpl<>(files);
         Pageable pageable = PageRequest.of(0, 20);
 
-        when(retailFileRepository.findWithFilters(eq("chain_001"), eq(123), eq(false), any(Pageable.class)))
+        when(retailFileRepository.findWithFilters(eq("chain_001"), eq(123), eq(FileProcessingStatus.PENDING), any(Pageable.class)))
                 .thenReturn(page);
 
         // When
-        Page<RetailFile> result = retailFileService.findAllWithFilters("chain_001", 123, false, 1, 20);
+        Page<RetailFile> result = retailFileService.findAllWithFilters("chain_001", 123, FileProcessingStatus.PENDING, 1, 20);
 
         // Then
         assertNotNull(result);
         assertEquals(1, result.getContent().size());
         assertEquals(testRetailFile.getId(), result.getContent().get(0).getId());
 
-        verify(retailFileRepository, times(1)).findWithFilters(eq("chain_001"), eq(123), eq(false), any(Pageable.class));
+        verify(retailFileRepository, times(1)).findWithFilters(eq("chain_001"), eq(123), eq(FileProcessingStatus.PENDING), any(Pageable.class));
     }
 
     @Test
@@ -179,27 +180,26 @@ class RetailFileServiceTest {
     }
 
     @Test
-    void updateRetailFile_ShouldReturnNull_WhenNotExists() {
+    void updateRetailFile_ShouldThrowException_WhenNotExists() {
         // Given
         when(retailFileRepository.findById(testId)).thenReturn(Optional.empty());
 
-        // When
-        RetailFile result = retailFileService.updateRetailFile(testId, updateRequest);
+        // When & Then
+        assertThrows(com.avivse.retailfileservice.exception.RetailFileNotFoundException.class,
+                () -> retailFileService.updateRetailFile(testId, updateRequest));
 
-        // Then
-        assertNull(result);
         verify(retailFileRepository, times(1)).findById(testId);
         verify(retailFileRepository, never()).save(any(RetailFile.class));
     }
 
     @Test
-    void markAsProcessed_ShouldUpdateProcessingStatus_WhenExists() {
+    void updateFileStatus_ShouldUpdateProcessingStatus_WhenExists() {
         // Given
         when(retailFileRepository.findById(testId)).thenReturn(Optional.of(testRetailFile));
         when(retailFileRepository.save(any(RetailFile.class))).thenReturn(testRetailFile);
 
         // When
-        RetailFile result = retailFileService.markAsProcessed(testId);
+        RetailFile result = retailFileService.updateFileStatus(testId, FileProcessingStatus.COMPLETED);
 
         // Then
         assertNotNull(result);

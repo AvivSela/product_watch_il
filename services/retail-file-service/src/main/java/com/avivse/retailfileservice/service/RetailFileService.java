@@ -3,6 +3,8 @@ package com.avivse.retailfileservice.service;
 import com.avivse.retailfileservice.dto.CreateRetailFileRequest;
 import com.avivse.retailfileservice.dto.UpdateRetailFileRequest;
 import com.avivse.retailfileservice.entity.RetailFile;
+import com.avivse.retailfileservice.enums.FileProcessingStatus;
+import com.avivse.retailfileservice.exception.RetailFileNotFoundException;
 import com.avivse.retailfileservice.repository.RetailFileRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -14,6 +16,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +30,7 @@ public class RetailFileService {
 
     private final RetailFileRepository retailFileRepository;
     private final Counter filesCreatedCounter;
+    private final Counter duplicateFilesCounter;
 
     @Autowired
     public RetailFileService(RetailFileRepository retailFileRepository, MeterRegistry meterRegistry) {
@@ -33,20 +39,44 @@ public class RetailFileService {
         this.filesCreatedCounter = Counter.builder("retail_files_created_total")
                 .description("Total number of retail files created")
                 .register(meterRegistry);
+
+        this.duplicateFilesCounter = Counter.builder("duplicate_files_detected_total")
+                .description("Total number of duplicate files detected")
+                .register(meterRegistry);
     }
 
-
-
     /**
-     * Create retail file from CreateRetailFileRequest DTO
+     * Create retail file from CreateRetailFileRequest DTO with duplicate detection
      */
     public RetailFile createRetailFile(CreateRetailFileRequest request) {
+        // Check for duplicates by file metadata
+        if (retailFileRepository.existsByChainIdAndFileNameAndFileUrl(
+                request.getChainId(), request.getFileName(), request.getFileUrl())) {
+            duplicateFilesCounter.increment();
+            throw new IllegalArgumentException("Duplicate file detected: same chain ID, file name, and URL already exist");
+        }
+
+        // Generate checksum if provided
+        String checksum = null;
+        if (request.getChecksum() != null) {
+            checksum = request.getChecksum();
+        } else if (request.getFileUrl() != null) {
+            checksum = generateChecksumFromUrl(request.getFileUrl());
+        }
+
+        // Check for duplicates by checksum if available
+        if (checksum != null && retailFileRepository.existsByChecksum(checksum)) {
+            duplicateFilesCounter.increment();
+            throw new IllegalArgumentException("Duplicate file detected: file with same checksum already exists");
+        }
+
         RetailFile retailFile = new RetailFile();
         retailFile.setChainId(request.getChainId());
         retailFile.setStoreId(request.getStoreId());
         retailFile.setFileName(request.getFileName());
         retailFile.setFileUrl(request.getFileUrl());
         retailFile.setFileSize(request.getFileSize());
+        retailFile.setChecksum(checksum);
 
         // Set upload date to now if not provided
         if (request.getUploadDate() != null) {
@@ -56,10 +86,10 @@ public class RetailFileService {
         }
 
         // Set processing status
-        if (request.getIsProcessed() != null) {
-            retailFile.setIsProcessed(request.getIsProcessed());
+        if (request.getStatus() != null) {
+            retailFile.setStatus(request.getStatus());
         } else {
-            retailFile.setIsProcessed(false);
+            retailFile.setStatus(FileProcessingStatus.PENDING);
         }
 
         RetailFile savedFile = retailFileRepository.save(retailFile);
@@ -73,36 +103,39 @@ public class RetailFileService {
     public RetailFile updateRetailFile(UUID id, UpdateRetailFileRequest request) {
         Optional<RetailFile> existingFile = retailFileRepository.findById(id);
 
-        if (existingFile.isPresent()) {
-            RetailFile fileToUpdate = existingFile.get();
-
-            // Update only the fields that are provided (not null)
-            if (request.getChainId() != null) {
-                fileToUpdate.setChainId(request.getChainId());
-            }
-            if (request.getStoreId() != null) {
-                fileToUpdate.setStoreId(request.getStoreId());
-            }
-            if (request.getFileName() != null) {
-                fileToUpdate.setFileName(request.getFileName());
-            }
-            if (request.getFileUrl() != null) {
-                fileToUpdate.setFileUrl(request.getFileUrl());
-            }
-            if (request.getFileSize() != null) {
-                fileToUpdate.setFileSize(request.getFileSize());
-            }
-            if (request.getUploadDate() != null) {
-                fileToUpdate.setUploadDate(request.getUploadDate());
-            }
-            if (request.getIsProcessed() != null) {
-                fileToUpdate.setIsProcessed(request.getIsProcessed());
-            }
-
-            return retailFileRepository.save(fileToUpdate);
+        if (existingFile.isEmpty()) {
+            throw new RetailFileNotFoundException("Retail file not found with id: " + id);
         }
 
-        return null;
+        RetailFile fileToUpdate = existingFile.get();
+
+        // Update only the fields that are provided (not null and not blank)
+        if (request.getChainId() != null && !request.getChainId().trim().isEmpty()) {
+            fileToUpdate.setChainId(request.getChainId());
+        }
+        if (request.getStoreId() != null) {
+            fileToUpdate.setStoreId(request.getStoreId());
+        }
+        if (request.getFileName() != null && !request.getFileName().trim().isEmpty()) {
+            fileToUpdate.setFileName(request.getFileName());
+        }
+        if (request.getFileUrl() != null && !request.getFileUrl().trim().isEmpty()) {
+            fileToUpdate.setFileUrl(request.getFileUrl());
+        }
+        if (request.getFileSize() != null) {
+            fileToUpdate.setFileSize(request.getFileSize());
+        }
+        if (request.getUploadDate() != null) {
+            fileToUpdate.setUploadDate(request.getUploadDate());
+        }
+        if (request.getStatus() != null) {
+            fileToUpdate.setStatus(request.getStatus());
+        }
+        if (request.getChecksum() != null && !request.getChecksum().trim().isEmpty()) {
+            fileToUpdate.setChecksum(request.getChecksum());
+        }
+
+        return retailFileRepository.save(fileToUpdate);
     }
 
     /**
@@ -117,12 +150,12 @@ public class RetailFileService {
      * Find all retail files with optional filters and pagination
      */
     @Transactional(readOnly = true)
-    public Page<RetailFile> findAllWithFilters(String chainId, Integer storeId, Boolean isProcessed,
+    public Page<RetailFile> findAllWithFilters(String chainId, Integer storeId, FileProcessingStatus status,
                                                int page, int limit) {
         // Create pageable with sorting by upload date (newest first)
         Pageable pageable = PageRequest.of(page - 1, limit, Sort.by("uploadDate").descending());
 
-        return retailFileRepository.findWithFilters(chainId, storeId, isProcessed, pageable);
+        return retailFileRepository.findWithFilters(chainId, storeId, status, pageable);
     }
 
     /**
@@ -137,23 +170,39 @@ public class RetailFileService {
      * Find files by processing status
      */
     @Transactional(readOnly = true)
-    public List<RetailFile> findByProcessingStatus(Boolean isProcessed) {
-        return retailFileRepository.findByIsProcessed(isProcessed);
+    public List<RetailFile> findByProcessingStatus(FileProcessingStatus status) {
+        return retailFileRepository.findByStatus(status);
     }
 
     /**
-     * Mark a file as processed
+     * Update file processing status
      */
-    public RetailFile markAsProcessed(UUID id) {
+    public RetailFile updateFileStatus(UUID id, FileProcessingStatus status) {
         Optional<RetailFile> existingFile = retailFileRepository.findById(id);
 
-        if (existingFile.isPresent()) {
-            RetailFile file = existingFile.get();
-            file.setIsProcessed(true);
-            return retailFileRepository.save(file);
+        if (existingFile.isEmpty()) {
+            throw new RetailFileNotFoundException("Retail file not found with id: " + id);
         }
 
-        return null; // Will handle this better with exceptions later
+        RetailFile file = existingFile.get();
+        file.setStatus(status);
+        return retailFileRepository.save(file);
+    }
+
+    /**
+     * Check for duplicate files
+     */
+    @Transactional(readOnly = true)
+    public boolean isDuplicateFile(String chainId, String fileName, String fileUrl) {
+        return retailFileRepository.existsByChainIdAndFileNameAndFileUrl(chainId, fileName, fileUrl);
+    }
+
+    /**
+     * Check for duplicate files by checksum
+     */
+    @Transactional(readOnly = true)
+    public boolean isDuplicateFileByChecksum(String checksum) {
+        return checksum != null && retailFileRepository.existsByChecksum(checksum);
     }
 
     /**
@@ -173,5 +222,26 @@ public class RetailFileService {
     @Transactional(readOnly = true)
     public boolean existsById(UUID id) {
         return retailFileRepository.existsById(id);
+    }
+
+    /**
+     * Generate SHA-256 checksum from URL (simplified for metadata-based checksum)
+     */
+    private String generateChecksumFromUrl(String url) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(url.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 algorithm not available", e);
+        }
     }
 }
