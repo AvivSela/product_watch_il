@@ -23,13 +23,13 @@ Creates a new retail file record in the system.
 **Request Body:**
 ```json
 {
-  "chainId": "string",       // Required, max 100 chars
-  "storeId": 123,           // Optional
-  "fileName": "string",      // Required, max 255 chars
-  "fileUrl": "string",       // Required, max 500 chars
-  "fileSize": 1024,         // Optional, in bytes
-  "uploadDate": "2024-01-15T10:30:00", // Optional, defaults to now
-  "isProcessed": false      // Optional, defaults to false
+  "chain_id": "string",       // Required, max 100 chars
+  "store_id": 123,           // Optional
+  "file_name": "string",      // Required, max 255 chars
+  "file_url": "string",       // Required, max 500 chars
+  "file_size": 1024,         // Optional, in bytes
+  "upload_date": "2024-01-15T10:30:00", // Optional, defaults to now
+  "is_processed": false      // Optional, defaults to false
 }
 ```
 
@@ -38,15 +38,15 @@ Creates a new retail file record in the system.
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "createdAt": "2024-01-15T10:30:00",
-  "updatedAt": "2024-01-15T10:30:00",
-  "chainId": "CHAIN001",
-  "storeId": 123,
-  "fileName": "sales_data.csv",
-  "fileUrl": "https://storage.example.com/files/sales_data.csv",
-  "fileSize": 1024,
-  "uploadDate": "2024-01-15T10:30:00",
-  "isProcessed": false
+  "created_at": "2024-01-15T10:30:00",
+  "updated_at": "2024-01-15T10:30:00",
+  "chain_id": "CHAIN001",
+  "store_id": 123,
+  "file_name": "sales_data.csv",
+  "file_url": "https://storage.example.com/files/sales_data.csv",
+  "file_size": 1024,
+  "upload_date": "2024-01-15T10:30:00",
+  "is_processed": false
 }
 ```
 
@@ -56,8 +56,8 @@ Creates a new retail file record in the system.
   "code": "VALIDATION_ERROR",
   "message": "Validation failed",
   "details": {
-    "chainId": "Chain ID is required",
-    "fileName": "File name is required"
+    "chain_id": "Chain ID is required",
+    "file_name": "File name is required"
   },
   "timestamp": "2024-01-15T10:30:00"
 }
@@ -77,15 +77,15 @@ Retrieves a specific retail file record by its ID.
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "createdAt": "2024-01-15T10:30:00",
-  "updatedAt": "2024-01-15T10:30:00",
-  "chainId": "CHAIN001",
-  "storeId": 123,
-  "fileName": "sales_data.csv",
-  "fileUrl": "https://storage.example.com/files/sales_data.csv",
-  "fileSize": 1024,
-  "uploadDate": "2024-01-15T10:30:00",
-  "isProcessed": false
+  "created_at": "2024-01-15T10:30:00",
+  "updated_at": "2024-01-15T10:30:00",
+  "chain_id": "CHAIN001",
+  "store_id": 123,
+  "file_name": "sales_data.csv",
+  "file_url": "https://storage.example.com/files/sales_data.csv",
+  "file_size": 1024,
+  "upload_date": "2024-01-15T10:30:00",
+  "is_processed": false
 }
 ```
 
@@ -105,9 +105,9 @@ Retrieves a paginated list of retail files with optional filtering.
 **Endpoint:** `GET /v1/retail-files`
 
 **Query Parameters:**
-- `chainId` (string, optional) - Filter by chain ID
-- `storeId` (integer, optional) - Filter by store ID
-- `isProcessed` (boolean, optional) - Filter by processing status
+- `chain_id` (string, optional) - Filter by chain ID
+- `store_id` (integer, optional) - Filter by store ID
+- `is_processed` (boolean, optional) - Filter by processing status
 - `page` (integer, optional, default: 1) - Page number (minimum: 1)
 - `limit` (integer, optional, default: 20) - Items per page (minimum: 1, maximum: 100)
 
@@ -118,15 +118,15 @@ Retrieves a paginated list of retail files with optional filtering.
   "data": [
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
-      "createdAt": "2024-01-15T10:30:00",
-      "updatedAt": "2024-01-15T10:30:00",
-      "chainId": "CHAIN001",
-      "storeId": 123,
-      "fileName": "sales_data.csv",
-      "fileUrl": "https://storage.example.com/files/sales_data.csv",
-      "fileSize": 1024,
-      "uploadDate": "2024-01-15T10:30:00",
-      "isProcessed": false
+      "created_at": "2024-01-15T10:30:00",
+      "updated_at": "2024-01-15T10:30:00",
+      "chain_id": "CHAIN001",
+      "store_id": 123,
+      "file_name": "sales_data.csv",
+      "file_url": "https://storage.example.com/files/sales_data.csv",
+      "file_size": 1024,
+      "upload_date": "2024-01-15T10:30:00",
+      "is_processed": false
     }
   ],
   "pagination": {
@@ -150,13 +150,13 @@ Updates an existing retail file record.
 **Request Body:**
 ```json
 {
-  "chainId": "string",       // Optional, max 100 chars
-  "storeId": 123,           // Optional
-  "fileName": "string",      // Optional, max 255 chars
-  "fileUrl": "string",       // Optional, max 500 chars
-  "fileSize": 1024,         // Optional, in bytes
-  "uploadDate": "2024-01-15T10:30:00", // Optional
-  "isProcessed": true       // Optional
+  "chain_id": "string",       // Optional, max 100 chars
+  "store_id": 123,           // Optional
+  "file_name": "string",      // Optional, max 255 chars
+  "file_url": "string",       // Optional, max 500 chars
+  "file_size": 1024,         // Optional, in bytes
+  "upload_date": "2024-01-15T10:30:00", // Optional
+  "is_processed": true       // Optional
 }
 ```
 
@@ -165,15 +165,15 @@ Updates an existing retail file record.
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "createdAt": "2024-01-15T10:30:00",
-  "updatedAt": "2024-01-15T11:00:00",
-  "chainId": "CHAIN001",
-  "storeId": 123,
-  "fileName": "updated_sales_data.csv",
-  "fileUrl": "https://storage.example.com/files/updated_sales_data.csv",
-  "fileSize": 2048,
-  "uploadDate": "2024-01-15T10:30:00",
-  "isProcessed": true
+  "created_at": "2024-01-15T10:30:00",
+  "updated_at": "2024-01-15T11:00:00",
+  "chain_id": "CHAIN001",
+  "store_id": 123,
+  "file_name": "updated_sales_data.csv",
+  "file_url": "https://storage.example.com/files/updated_sales_data.csv",
+  "file_size": 2048,
+  "upload_date": "2024-01-15T10:30:00",
+  "is_processed": true
 }
 ```
 
@@ -192,7 +192,7 @@ Updates an existing retail file record.
   "code": "VALIDATION_ERROR",
   "message": "Validation failed",
   "details": {
-    "fileName": "File name cannot exceed 255 characters"
+    "file_name": "File name cannot exceed 255 characters"
   },
   "timestamp": "2024-01-15T10:30:00"
 }
@@ -232,15 +232,15 @@ Marks a retail file as processed.
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "createdAt": "2024-01-15T10:30:00",
-  "updatedAt": "2024-01-15T11:15:00",
-  "chainId": "CHAIN001",
-  "storeId": 123,
-  "fileName": "sales_data.csv",
-  "fileUrl": "https://storage.example.com/files/sales_data.csv",
-  "fileSize": 1024,
-  "uploadDate": "2024-01-15T10:30:00",
-  "isProcessed": true
+  "created_at": "2024-01-15T10:30:00",
+  "updated_at": "2024-01-15T11:15:00",
+  "chain_id": "CHAIN001",
+  "store_id": 123,
+  "file_name": "sales_data.csv",
+  "file_url": "https://storage.example.com/files/sales_data.csv",
+  "file_size": 1024,
+  "upload_date": "2024-01-15T10:30:00",
+  "is_processed": true
 }
 ```
 
@@ -260,39 +260,39 @@ Marks a retail file as processed.
 | Field | Type | Description | Constraints |
 |-------|------|-------------|-------------|
 | `id` | UUID | Unique identifier | Auto-generated |
-| `createdAt` | LocalDateTime | Creation timestamp | Auto-generated |
-| `updatedAt` | LocalDateTime | Last update timestamp | Auto-updated |
-| `chainId` | String | Chain identifier | Required, max 100 chars |
-| `storeId` | Integer | Store identifier | Optional |
-| `fileName` | String | Original file name | Required, max 255 chars |
-| `fileUrl` | String | URL where file is stored | Required, max 500 chars |
-| `fileSize` | Long | File size in bytes | Optional |
-| `uploadDate` | LocalDateTime | When file was uploaded | Required |
-| `isProcessed` | Boolean | Processing status | Required, defaults to false |
+| `created_at` | LocalDateTime | Creation timestamp | Auto-generated |
+| `updated_at` | LocalDateTime | Last update timestamp | Auto-updated |
+| `chain_id` | String | Chain identifier | Required, max 100 chars |
+| `store_id` | Integer | Store identifier | Optional |
+| `file_name` | String | Original file name | Required, max 255 chars |
+| `file_url` | String | URL where file is stored | Required, max 500 chars |
+| `file_size` | Long | File size in bytes | Optional |
+| `upload_date` | LocalDateTime | When file was uploaded | Required |
+| `is_processed` | Boolean | Processing status | Required, defaults to false |
 
 ### CreateRetailFileRequest DTO
 
 | Field | Type | Description | Validation |
 |-------|------|-------------|------------|
-| `chainId` | String | Chain identifier | Required, max 100 chars |
-| `storeId` | Integer | Store identifier | Optional |
-| `fileName` | String | Original file name | Required, max 255 chars |
-| `fileUrl` | String | URL where file is stored | Required, max 500 chars |
-| `fileSize` | Long | File size in bytes | Optional |
-| `uploadDate` | LocalDateTime | When file was uploaded | Optional, defaults to now |
-| `isProcessed` | Boolean | Processing status | Optional, defaults to false |
+| `chain_id` | String | Chain identifier | Required, max 100 chars |
+| `store_id` | Integer | Store identifier | Optional |
+| `file_name` | String | Original file name | Required, max 255 chars |
+| `file_url` | String | URL where file is stored | Required, max 500 chars |
+| `file_size` | Long | File size in bytes | Optional |
+| `upload_date` | LocalDateTime | When file was uploaded | Optional, defaults to now |
+| `is_processed` | Boolean | Processing status | Optional, defaults to false |
 
 ### UpdateRetailFileRequest DTO
 
 | Field | Type | Description | Validation |
 |-------|------|-------------|------------|
-| `chainId` | String | Chain identifier | Optional, max 100 chars |
-| `storeId` | Integer | Store identifier | Optional |
-| `fileName` | String | Original file name | Optional, max 255 chars |
-| `fileUrl` | String | URL where file is stored | Optional, max 500 chars |
-| `fileSize` | Long | File size in bytes | Optional |
-| `uploadDate` | LocalDateTime | When file was uploaded | Optional |
-| `isProcessed` | Boolean | Processing status | Optional |
+| `chain_id` | String | Chain identifier | Optional, max 100 chars |
+| `store_id` | Integer | Store identifier | Optional |
+| `file_name` | String | Original file name | Optional, max 255 chars |
+| `file_url` | String | URL where file is stored | Optional, max 500 chars |
+| `file_size` | Long | File size in bytes | Optional |
+| `upload_date` | LocalDateTime | When file was uploaded | Optional |
+| `is_processed` | Boolean | Processing status | Optional |
 
 ### ErrorResponse DTO
 
@@ -318,17 +318,17 @@ Marks a retail file as processed.
 curl -X POST http://localhost:8080/v1/retail-files \
   -H "Content-Type: application/json" \
   -d '{
-    "chainId": "CHAIN001",
-    "storeId": 123,
-    "fileName": "sales_data.csv",
-    "fileUrl": "https://storage.example.com/files/sales_data.csv",
-    "fileSize": 1024
+    "chain_id": "CHAIN001",
+    "store_id": 123,
+    "file_name": "sales_data.csv",
+    "file_url": "https://storage.example.com/files/sales_data.csv",
+    "file_size": 1024
   }'
 ```
 
 ### Get all files for a specific chain
 ```bash
-curl "http://localhost:8080/v1/retail-files?chainId=CHAIN001&page=1&limit=10"
+curl "http://localhost:8080/v1/retail-files?chain_id=CHAIN001&page=1&limit=10"
 ```
 
 ### Mark a file as processed
@@ -341,8 +341,8 @@ curl -X PATCH http://localhost:8080/v1/retail-files/550e8400-e29b-41d4-a716-4466
 curl -X PUT http://localhost:8080/v1/retail-files/550e8400-e29b-41d4-a716-446655440000 \
   -H "Content-Type: application/json" \
   -d '{
-    "fileName": "updated_sales_data.csv",
-    "isProcessed": true
+    "file_name": "updated_sales_data.csv",
+    "is_processed": true
   }'
 ```
 
@@ -380,7 +380,7 @@ The service is configured with CORS enabled for all origins (`*`) for developmen
 ## Notes
 
 - All timestamps are in ISO 8601 format
-- The service uses snake_case for JSON property naming
+- The service uses snake_case for JSON property naming (configured via Jackson SNAKE_CASE)
 - File size is measured in bytes
 - UUIDs are version 4 (random)
 - Pagination starts from page 1
