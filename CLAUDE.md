@@ -12,7 +12,10 @@ This is a **monorepo** for the Product Watch Platform containing multiple micros
 product-watch-platform/
 ├── services/
 │   └── retail-file-service/          # Spring Boot microservice for retail file management
-├── monitoring/                       # Prometheus and Grafana configurations
+├── infrastructure/
+│   ├── monitoring/                   # Prometheus and Grafana configurations
+│   └── docker/                       # Docker configurations
+├── docs/                             # Project documentation
 ├── root-pom.xml                     # Root parent POM for all modules
 └── docker-compose.yml               # Local development stack
 ```
@@ -97,6 +100,8 @@ docker-compose down
 - **Database**: H2 console available at `/h2-console` (development)
 - **Metrics**: Available at `/actuator/prometheus`
 - **Health**: Available at `/actuator/health`
+- **OpenAPI/Swagger**: Available at `/swagger-ui.html`
+- **API Documentation**: `services/retail-file-service/API_DOCUMENTATION.md`
 
 ## Maven Multi-Module Configuration
 
@@ -129,3 +134,12 @@ When adding new microservices:
 ### Actuator Endpoints
 Management endpoints exposed: health, info, metrics, prometheus, env, loggers
 Base path: `/actuator`
+
+### CI/CD
+- **GitHub Actions**: `.github/workflows/pr-tests.yml` - Runs tests on PR creation
+- **Test Command**: `mvn test -f root-pom.xml` (runs all tests across modules)
+
+### Docker Infrastructure
+- **Compose File**: Uses `infrastructure/monitoring/` for Prometheus/Grafana configs
+- **Services**: Prometheus (port 9090), Grafana (port 3000, admin/admin)
+- **Network**: Uses host networking mode for development
