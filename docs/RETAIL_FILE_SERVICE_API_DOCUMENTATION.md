@@ -23,13 +23,13 @@ Creates a new retail file record in the system.
 **Request Body:**
 ```json
 {
-  "chain_id": "string",       // Required, max 100 chars
+  "chain_id": "string",       // Required, non-blank, max 100 chars
   "store_id": 123,           // Optional
-  "file_name": "string",      // Required, max 255 chars
-  "file_url": "string",       // Required, max 500 chars
+  "file_name": "string",      // Required, non-blank, max 255 chars
+  "file_url": "string",       // Required, non-blank, max 500 chars
   "file_size": 1024,         // Optional, in bytes
-  "upload_date": "2024-01-15T10:30:00", // Optional, defaults to now
-  "is_processed": false      // Optional, defaults to false
+  "upload_date": "2024-01-15T10:30:00", // Optional, auto-set to current time if not provided
+  "is_processed": false      // Optional, defaults to false if not provided
 }
 ```
 
@@ -54,10 +54,10 @@ Creates a new retail file record in the system.
 ```json
 {
   "code": "VALIDATION_ERROR",
-  "message": "Validation failed",
+  "message": "Invalid input data",
   "details": {
-    "chain_id": "Chain ID is required",
-    "file_name": "File name is required"
+    "chainId": "Chain ID is required",
+    "fileName": "File name is required"
   },
   "timestamp": "2024-01-15T10:30:00"
 }
@@ -98,6 +98,15 @@ Retrieves a specific retail file record by its ID.
 }
 ```
 
+- **400 Bad Request** - Invalid parameter type
+```json
+{
+  "code": "INVALID_PARAMETER_TYPE",
+  "message": "Invalid value 'invalid-uuid' for parameter 'id'. Expected type: UUID",
+  "timestamp": "2024-01-15T10:30:00"
+}
+```
+
 ### 3. List Retail Files
 
 Retrieves a paginated list of retail files with optional filtering.
@@ -105,11 +114,13 @@ Retrieves a paginated list of retail files with optional filtering.
 **Endpoint:** `GET /v1/retail-files`
 
 **Query Parameters:**
-- `chain_id` (string, optional) - Filter by chain ID
-- `store_id` (integer, optional) - Filter by store ID
-- `is_processed` (boolean, optional) - Filter by processing status
+- `chainId` (string, optional) - Filter by chain ID
+- `storeId` (integer, optional) - Filter by store ID
+- `isProcessed` (boolean, optional) - Filter by processing status
 - `page` (integer, optional, default: 1) - Page number (minimum: 1)
 - `limit` (integer, optional, default: 20) - Items per page (minimum: 1, maximum: 100)
+
+**Note:** Results are sorted by upload date in descending order (newest first).
 
 **Response:**
 - **200 OK** - List retrieved successfully
@@ -150,15 +161,17 @@ Updates an existing retail file record.
 **Request Body:**
 ```json
 {
-  "chain_id": "string",       // Optional, max 100 chars
+  "chain_id": "string",       // Optional, max 100 chars (no blank validation)
   "store_id": 123,           // Optional
-  "file_name": "string",      // Optional, max 255 chars
-  "file_url": "string",       // Optional, max 500 chars
+  "file_name": "string",      // Optional, max 255 chars (no blank validation)
+  "file_url": "string",       // Optional, max 500 chars (no blank validation)
   "file_size": 1024,         // Optional, in bytes
   "upload_date": "2024-01-15T10:30:00", // Optional
   "is_processed": true       // Optional
 }
 ```
+
+**Note:** Only provided fields will be updated. The update request uses partial update logic - fields not included in the request body will remain unchanged.
 
 **Response:**
 - **200 OK** - File updated successfully
@@ -190,9 +203,9 @@ Updates an existing retail file record.
 ```json
 {
   "code": "VALIDATION_ERROR",
-  "message": "Validation failed",
+  "message": "Invalid input data",
   "details": {
-    "file_name": "File name cannot exceed 255 characters"
+    "fileName": "File name cannot exceed 255 characters"
   },
   "timestamp": "2024-01-15T10:30:00"
 }
@@ -274,25 +287,50 @@ Marks a retail file as processed.
 
 | Field | Type | Description | Validation |
 |-------|------|-------------|------------|
-| `chain_id` | String | Chain identifier | Required, max 100 chars |
+| `chain_id` | String | Chain identifier | Required, non-blank, max 100 chars |
 | `store_id` | Integer | Store identifier | Optional |
-| `file_name` | String | Original file name | Required, max 255 chars |
-| `file_url` | String | URL where file is stored | Required, max 500 chars |
+| `file_name` | String | Original file name | Required, non-blank, max 255 chars |
+| `file_url` | String | URL where file is stored | Required, non-blank, max 500 chars |
 | `file_size` | Long | File size in bytes | Optional |
-| `upload_date` | LocalDateTime | When file was uploaded | Optional, defaults to now |
-| `is_processed` | Boolean | Processing status | Optional, defaults to false |
+| `upload_date` | LocalDateTime | When file was uploaded | Optional, auto-set to current time if not provided |
+| `is_processed` | Boolean | Processing status | Optional, defaults to false if not provided |
 
 ### UpdateRetailFileRequest DTO
 
 | Field | Type | Description | Validation |
 |-------|------|-------------|------------|
-| `chain_id` | String | Chain identifier | Optional, max 100 chars |
+| `chain_id` | String | Chain identifier | Optional, max 100 chars (no blank validation) |
 | `store_id` | Integer | Store identifier | Optional |
-| `file_name` | String | Original file name | Optional, max 255 chars |
-| `file_url` | String | URL where file is stored | Optional, max 500 chars |
+| `file_name` | String | Original file name | Optional, max 255 chars (no blank validation) |
+| `file_url` | String | URL where file is stored | Optional, max 500 chars (no blank validation) |
 | `file_size` | Long | File size in bytes | Optional |
 | `upload_date` | LocalDateTime | When file was uploaded | Optional |
 | `is_processed` | Boolean | Processing status | Optional |
+
+**Note:** This DTO uses partial update logic. Only provided (non-null) fields will be updated in the database.
+
+## Validation Rules and Business Logic
+
+### Field Validation Differences
+
+**Create Operations (POST):**
+- String fields (`chain_id`, `file_name`, `file_url`) use `@NotBlank` validation - they cannot be null, empty, or contain only whitespace
+- Required fields must be provided and cannot be blank
+- Auto-creation: `upload_date` defaults to current time if not provided
+- Auto-creation: `is_processed` defaults to `false` if not provided
+
+**Update Operations (PUT):**
+- String fields use only `@Size` validation - they can be empty strings if provided
+- All fields are optional - only provided fields are updated
+- Partial update logic: null fields in request body are ignored (existing values preserved)
+- No auto-creation logic - values are updated exactly as provided
+
+### Business Rules
+
+1. **UUID Generation**: Entity IDs are auto-generated as UUID version 4
+2. **Timestamps**: `created_at` and `updated_at` are automatically managed by JPA
+3. **Default Sorting**: List operations return results sorted by `upload_date` in descending order (newest first)
+4. **Processing Status**: The `markAsProcessed` endpoint specifically sets `is_processed` to `true`
 
 ### ErrorResponse DTO
 
@@ -309,6 +347,7 @@ Marks a retail file as processed.
 |------|-------------|
 | `RETAIL_FILE_NOT_FOUND` | Requested retail file was not found |
 | `VALIDATION_ERROR` | Request validation failed |
+| `INVALID_PARAMETER_TYPE` | Invalid parameter type provided (e.g., string instead of UUID) |
 | `INTERNAL_SERVER_ERROR` | Internal server error occurred |
 
 ## Example Usage
@@ -328,7 +367,7 @@ curl -X POST http://localhost:8080/v1/retail-files \
 
 ### Get all files for a specific chain
 ```bash
-curl "http://localhost:8080/v1/retail-files?chain_id=CHAIN001&page=1&limit=10"
+curl "http://localhost:8080/v1/retail-files?chainId=CHAIN001&page=1&limit=10"
 ```
 
 ### Mark a file as processed
