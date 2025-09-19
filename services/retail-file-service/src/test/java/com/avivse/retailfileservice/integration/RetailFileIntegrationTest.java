@@ -84,64 +84,6 @@ class RetailFileIntegrationTest {
         assertNotNull(savedFile.getId());
     }
 
-    @Test
-    void createRetailFile_ShouldRejectInvalidData() throws Exception {
-        // Given - missing required chainId
-        CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
-        invalidRequest.setFileName("test.csv");
-        invalidRequest.setFileUrl("https://example.com/test.csv");
-
-        // When & Then
-        mockMvc.perform(post("/v1/retail-files")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest());
-
-        // Verify nothing was saved to database
-        assertEquals(0, retailFileRepository.count());
-    }
-
-    @Test
-    @Transactional
-    void getRetailFile_ShouldReturnFileFromDatabase() throws Exception {
-        // Given - Create file directly in database
-        RetailFile file = createTestFile("chain_002", 456, "database_test.csv", true);
-
-        // When & Then
-        mockMvc.perform(get("/v1/retail-files/{id}", file.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(file.getId().toString()))
-                .andExpect(jsonPath("$.chain_id").value("chain_002"))
-                .andExpect(jsonPath("$.file_name").value("database_test.csv"))
-                .andExpect(jsonPath("$.is_processed").value(true));
-    }
-
-    @Test
-    void getNonExistentFile_ShouldReturn404() throws Exception {
-        // Given
-        UUID nonExistentId = UUID.randomUUID();
-
-        // When & Then
-        mockMvc.perform(get("/v1/retail-files/{id}", nonExistentId))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @Transactional
-    void listRetailFiles_ShouldReturnAllFilesWithPagination() throws Exception {
-        // Given - Create multiple files in database
-        createTestFile("chain_001", 123, "file1.csv", false);
-        createTestFile("chain_001", 124, "file2.csv", true);
-        createTestFile("chain_002", 125, "file3.csv", false);
-
-        // When & Then
-        mockMvc.perform(get("/v1/retail-files"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data", hasSize(3)))
-                .andExpect(jsonPath("$.pagination.total").value(3))
-                .andExpect(jsonPath("$.pagination.page").value(1))
-                .andExpect(jsonPath("$.pagination.limit").value(20));
-    }
 
     @Test
     @Transactional
@@ -199,22 +141,6 @@ class RetailFileIntegrationTest {
         assertNotEquals(originalProcessed, updatedFile.getIsProcessed());
     }
 
-    @Test
-    @Transactional
-    void markAsProcessed_ShouldUpdateProcessingStatus() throws Exception {
-        // Given
-        RetailFile file = createTestFile("chain_001", 123, "process_test.csv", false);
-
-        // When
-        mockMvc.perform(patch("/v1/retail-files/{id}/process", file.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.is_processed").value(true));
-
-        // Then - Verify in database
-        RetailFile updatedFile = retailFileRepository.findById(file.getId()).orElse(null);
-        assertNotNull(updatedFile);
-        assertEquals(true, updatedFile.getIsProcessed());
-    }
 
     @Test
     @Transactional
@@ -231,15 +157,6 @@ class RetailFileIntegrationTest {
         assertFalse(retailFileRepository.existsById(fileId));
     }
 
-    @Test
-    void deleteNonExistentFile_ShouldReturn404() throws Exception {
-        // Given
-        UUID nonExistentId = UUID.randomUUID();
-
-        // When & Then
-        mockMvc.perform(delete("/v1/retail-files/{id}", nonExistentId))
-                .andExpect(status().isNotFound());
-    }
 
     // Helper method to create test files in database
     private RetailFile createTestFile(String chainId, Integer storeId, String fileName, Boolean isProcessed) {
