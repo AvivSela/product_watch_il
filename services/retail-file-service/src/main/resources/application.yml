@@ -17,6 +17,10 @@ spring:
       enabled: true
       path: /h2-console
 
+  # Jackson Configuration
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
   # JPA Configuration
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect

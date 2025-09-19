@@ -66,9 +66,9 @@ class RetailFileIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.chainId").value("chain_001"))
-                .andExpect(jsonPath("$.fileName").value("integration_test.csv"))
-                .andExpect(jsonPath("$.isProcessed").value(false))
+                .andExpect(jsonPath("$.chain_id").value("chain_001"))
+                .andExpect(jsonPath("$.file_name").value("integration_test.csv"))
+                .andExpect(jsonPath("$.is_processed").value(false))
                 .andReturn();
 
         // Then - Verify in database
@@ -111,9 +111,9 @@ class RetailFileIntegrationTest {
         mockMvc.perform(get("/v1/retail-files/{id}", file.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(file.getId().toString()))
-                .andExpect(jsonPath("$.chainId").value("chain_002"))
-                .andExpect(jsonPath("$.fileName").value("database_test.csv"))
-                .andExpect(jsonPath("$.isProcessed").value(true));
+                .andExpect(jsonPath("$.chain_id").value("chain_002"))
+                .andExpect(jsonPath("$.file_name").value("database_test.csv"))
+                .andExpect(jsonPath("$.is_processed").value(true));
     }
 
     @Test
@@ -183,9 +183,9 @@ class RetailFileIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.fileSize").value(4096))
-                .andExpect(jsonPath("$.isProcessed").value(true))
-                .andExpect(jsonPath("$.fileName").value("original.csv"));
+                .andExpect(jsonPath("$.file_size").value(4096))
+                .andExpect(jsonPath("$.is_processed").value(true))
+                .andExpect(jsonPath("$.file_name").value("original.csv"));
 
         // Then - Verify in database
         RetailFile updatedFile = retailFileRepository.findById(originalFile.getId()).orElse(null);
@@ -208,7 +208,7 @@ class RetailFileIntegrationTest {
         // When
         mockMvc.perform(patch("/v1/retail-files/{id}/process", file.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.isProcessed").value(true));
+                .andExpect(jsonPath("$.is_processed").value(true));
 
         // Then - Verify in database
         RetailFile updatedFile = retailFileRepository.findById(file.getId()).orElse(null);

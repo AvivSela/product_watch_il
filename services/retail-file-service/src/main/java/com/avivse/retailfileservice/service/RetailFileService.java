@@ -61,23 +61,11 @@ public class RetailFileService {
         } else {
             retailFile.setIsProcessed(false);
         }
-        RetailFile result = retailFileRepository.save(convertToEntity(request));
+
+        RetailFile savedFile = retailFileRepository.save(retailFile);
         filesCreatedCounter.increment();
-        return retailFileRepository.save(retailFile);
+        return savedFile;
     }
-
-    private RetailFile convertToEntity(CreateRetailFileRequest request) {
-        RetailFile retailFile = new RetailFile();
-        retailFile.setChainId(request.getChainId());
-        retailFile.setStoreId(request.getStoreId());
-        retailFile.setFileName(request.getFileName());
-        retailFile.setFileUrl(request.getFileUrl());
-        retailFile.setFileSize(request.getFileSize());
-        retailFile.setUploadDate(request.getUploadDate() != null ? request.getUploadDate() : LocalDateTime.now());
-        retailFile.setIsProcessed(request.getIsProcessed() != null ? request.getIsProcessed() : false);
-        return retailFile;
-    }
-
 
     /**
      * Update retail file from UpdateRetailFileRequest DTO
@@ -118,23 +106,6 @@ public class RetailFileService {
     }
 
     /**
-     * Create a new retail file record
-     */
-    public RetailFile createRetailFile(RetailFile retailFile) {
-        // Set default processing status if not provided
-        if (retailFile.getIsProcessed() == null) {
-            retailFile.setIsProcessed(false);
-        }
-
-        // Set upload date to now if not provided
-        if (retailFile.getUploadDate() == null) {
-            retailFile.setUploadDate(LocalDateTime.now());
-        }
-
-        return retailFileRepository.save(retailFile);
-    }
-
-    /**
      * Find retail file by ID
      */
     @Transactional(readOnly = true)
@@ -168,44 +139,6 @@ public class RetailFileService {
     @Transactional(readOnly = true)
     public List<RetailFile> findByProcessingStatus(Boolean isProcessed) {
         return retailFileRepository.findByIsProcessed(isProcessed);
-    }
-
-    /**
-     * Update an existing retail file
-     */
-    public RetailFile updateRetailFile(UUID id, RetailFile updatedFile) {
-        Optional<RetailFile> existingFile = retailFileRepository.findById(id);
-
-        if (existingFile.isPresent()) {
-            RetailFile fileToUpdate = existingFile.get();
-
-            // Update only the fields that are allowed to be modified
-            if (updatedFile.getChainId() != null) {
-                fileToUpdate.setChainId(updatedFile.getChainId());
-            }
-            if (updatedFile.getStoreId() != null) {
-                fileToUpdate.setStoreId(updatedFile.getStoreId());
-            }
-            if (updatedFile.getFileName() != null) {
-                fileToUpdate.setFileName(updatedFile.getFileName());
-            }
-            if (updatedFile.getFileUrl() != null) {
-                fileToUpdate.setFileUrl(updatedFile.getFileUrl());
-            }
-            if (updatedFile.getFileSize() != null) {
-                fileToUpdate.setFileSize(updatedFile.getFileSize());
-            }
-            if (updatedFile.getUploadDate() != null) {
-                fileToUpdate.setUploadDate(updatedFile.getUploadDate());
-            }
-            if (updatedFile.getIsProcessed() != null) {
-                fileToUpdate.setIsProcessed(updatedFile.getIsProcessed());
-            }
-
-            return retailFileRepository.save(fileToUpdate);
-        }
-
-        return null; // Will handle this better with exceptions later
     }
 
     /**

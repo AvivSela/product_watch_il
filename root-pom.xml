@@ -14,9 +14,6 @@
 
     <modules>
         <module>services/retail-file-service</module>
-        <module>shared/common-dto</module>
-        <module>shared/common-exceptions</module>
-        <module>shared/common-monitoring</module>
     </modules>
 
     <properties>
@@ -64,24 +61,6 @@
                 <scope>runtime</scope>
             </dependency>
 
-            <!-- Shared modules -->
-            <dependency>
-                <groupId>com.avivse</groupId>
-                <artifactId>common-dto</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.avivse</groupId>
-                <artifactId>common-exceptions</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.avivse</groupId>
-                <artifactId>common-monitoring</artifactId>
-                <version>${project.version}</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 

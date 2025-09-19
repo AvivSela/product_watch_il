@@ -80,9 +80,9 @@ class RetailFileControllerTest {
                         .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(testId.toString()))
-                .andExpect(jsonPath("$.chainId").value("chain_001"))
-                .andExpect(jsonPath("$.fileName").value("test_file.csv"))
-                .andExpect(jsonPath("$.isProcessed").value(false));
+                .andExpect(jsonPath("$.chain_id").value("chain_001"))
+                .andExpect(jsonPath("$.file_name").value("test_file.csv"))
+                .andExpect(jsonPath("$.is_processed").value(false));
 
         verify(retailFileService, times(1)).createRetailFile(any(CreateRetailFileRequest.class));
     }
@@ -113,8 +113,8 @@ class RetailFileControllerTest {
         mockMvc.perform(get("/v1/retail-files/{id}", testId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(testId.toString()))
-                .andExpect(jsonPath("$.chainId").value("chain_001"))
-                .andExpect(jsonPath("$.fileName").value("test_file.csv"));
+                .andExpect(jsonPath("$.chain_id").value("chain_001"))
+                .andExpect(jsonPath("$.file_name").value("test_file.csv"));
 
         verify(retailFileService, times(1)).findById(testId);
     }
@@ -190,8 +190,8 @@ class RetailFileControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.fileSize").value(2048))
-                .andExpect(jsonPath("$.isProcessed").value(true));
+                .andExpect(jsonPath("$.file_size").value(2048))
+                .andExpect(jsonPath("$.is_processed").value(true));
 
         verify(retailFileService, times(1)).updateRetailFile(eq(testId), any(UpdateRetailFileRequest.class));
     }
@@ -248,7 +248,7 @@ class RetailFileControllerTest {
         // When & Then
         mockMvc.perform(patch("/v1/retail-files/{id}/process", testId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.isProcessed").value(true));
+                .andExpect(jsonPath("$.is_processed").value(true));
 
         verify(retailFileService, times(1)).markAsProcessed(testId);
     }

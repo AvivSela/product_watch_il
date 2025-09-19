@@ -4,6 +4,7 @@ import com.avivse.retailfileservice.dto.CreateRetailFileRequest;
 import com.avivse.retailfileservice.dto.UpdateRetailFileRequest;
 import com.avivse.retailfileservice.entity.RetailFile;
 import com.avivse.retailfileservice.repository.RetailFileRepository;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +32,8 @@ class RetailFileServiceTest {
     @Mock
     private RetailFileRepository retailFileRepository;
 
-    @InjectMocks
+    private SimpleMeterRegistry meterRegistry;
+
     private RetailFileService retailFileService;
 
     private RetailFile testRetailFile;
@@ -70,6 +72,12 @@ class RetailFileServiceTest {
         updateRequest = new UpdateRetailFileRequest();
         updateRequest.setFileSize(2048L);
         updateRequest.setIsProcessed(true);
+
+        // Create a real SimpleMeterRegistry for metrics
+        meterRegistry = new SimpleMeterRegistry();
+
+        // Manually create the service with mocked dependencies
+        retailFileService = new RetailFileService(retailFileRepository, meterRegistry);
     }
 
     @Test

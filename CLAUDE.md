@@ -12,14 +12,7 @@ This is a **monorepo** for the Product Watch Platform containing multiple micros
 product-watch-platform/
 ├── services/
 │   └── retail-file-service/          # Spring Boot microservice for retail file management
-├── shared/
-│   ├── common-dto/                   # Shared DTOs across services
-│   ├── common-exceptions/            # Shared exception handling
-│   └── common-monitoring/            # Shared monitoring utilities
-├── infrastructure/
-│   └── monitoring/                   # Prometheus and Grafana configurations
-├── tools/scripts/                    # Build and utility scripts
-├── docs/                            # Documentation
+├── monitoring/                       # Prometheus and Grafana configurations
 ├── root-pom.xml                     # Root parent POM for all modules
 └── docker-compose.yml               # Local development stack
 ```
@@ -122,7 +115,6 @@ When adding new microservices:
 2. Add module to `root-pom.xml`
 3. Inherit from parent POM in service POM
 4. Follow established package structure
-5. Use shared modules for common functionality
 
 ## Important Notes
 
@@ -133,7 +125,6 @@ When adding new microservices:
 
 ### Package Structure
 - **retail-file-service**: `com.avivse.retailfileservice` base package
-- **Shared modules**: Follow `com.avivse.shared.*` pattern
 
 ### Actuator Endpoints
 Management endpoints exposed: health, info, metrics, prometheus, env, loggers
