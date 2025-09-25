@@ -15,6 +15,7 @@ product-watch-platform/
 │   └── store-service/                # Spring Boot microservice for store management
 ├── infrastructure/
 │   ├── monitoring/                   # Prometheus and Grafana configurations
+│   ├── storage/                      # MinIO S3 storage configurations
 │   └── docker/                       # Docker configurations
 ├── docs/                             # Project documentation
 ├── root-pom.xml                     # Root parent POM for all modules
@@ -70,10 +71,22 @@ mvn test -Dtest=RetailFileIntegrationTest
 ### Monitoring Stack
 ```bash
 # Start Prometheus and Grafana (from root)
-docker-compose up -d
+docker-compose up -d prometheus grafana
 
 # Stop monitoring stack
-docker-compose down
+docker-compose down prometheus grafana
+```
+
+### Storage Stack (MinIO S3)
+```bash
+# Start MinIO S3-compatible storage
+docker-compose up -d minio
+
+# Stop MinIO
+docker-compose down minio
+
+# Start all infrastructure services
+docker-compose up -d
 ```
 
 ## Architecture
@@ -97,6 +110,7 @@ Both services follow the standard Spring Boot layered architecture:
 - **Framework**: Spring Boot 3.3.6 with Java 17
 - **Build Tool**: Maven (multi-module)
 - **Database**: H2 in-memory (development)
+- **Storage**: MinIO S3-compatible object storage (development)
 - **Monitoring**: Micrometer + Prometheus + Grafana
 - **API Documentation**: SpringDoc OpenAPI
 - **Testing**: JUnit with Spring Boot Test
@@ -136,6 +150,8 @@ When adding new microservices:
 - **store-service**: 8000
 - **Prometheus**: 9090 (via docker-compose)
 - **Grafana**: 3000 (admin/admin)
+- **MinIO API**: 9000 (minioadmin/minioadmin123)
+- **MinIO Console**: 9001 (minioadmin/minioadmin123)
 
 ### Package Structure
 - **retail-file-service**: `com.avivse.retailfileservice` base package
@@ -151,5 +167,17 @@ Base path: `/actuator`
 
 ### Docker Infrastructure
 - **Compose File**: Uses `infrastructure/monitoring/` for Prometheus/Grafana configs
-- **Services**: Prometheus (port 9090), Grafana (port 3000, admin/admin)
-- **Network**: Uses host networking mode for development
+- **Storage**: Uses `infrastructure/storage/` for MinIO S3 configs
+- **Services**:
+  - Prometheus (port 9090)
+  - Grafana (port 3000, admin/admin)
+  - MinIO API (port 9000, minioadmin/minioadmin123)
+  - MinIO Console (port 9001, minioadmin/minioadmin123)
+- **Network**: Host networking for monitoring, port mapping for MinIO
+- **Volumes**: Persistent data for Grafana and MinIO
+
+### File Storage
+- **MinIO S3**: S3-compatible object storage for file uploads/downloads
+- **Default Bucket**: Create `retail-files` bucket for retail file service
+- **Integration**: Use AWS SDK with MinIO endpoint configuration
+- **Web Console**: Access MinIO web interface at http://localhost:9001
