@@ -49,8 +49,6 @@ class RetailFileServiceTest {
         // Create test RetailFile entity
         testRetailFile = new RetailFile();
         testRetailFile.setId(testId);
-        testRetailFile.setChainId("chain_001");
-        testRetailFile.setStoreId(123);
         testRetailFile.setFileName("test_file.csv");
         testRetailFile.setFileUrl("https://example.com/test_file.csv");
         testRetailFile.setFileSize(1024L);
@@ -61,8 +59,6 @@ class RetailFileServiceTest {
 
         // Create test CreateRetailFileRequest
         createRequest = new CreateRetailFileRequest();
-        createRequest.setChainId("chain_001");
-        createRequest.setStoreId(123);
         createRequest.setFileName("test_file.csv");
         createRequest.setFileUrl("https://example.com/test_file.csv");
         createRequest.setFileSize(1024L);
@@ -91,7 +87,6 @@ class RetailFileServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals("chain_001", result.getChainId());
         assertEquals("test_file.csv", result.getFileName());
         assertEquals(FileProcessingStatus.PENDING, result.getStatus());
 
@@ -125,7 +120,6 @@ class RetailFileServiceTest {
         // Then
         assertTrue(result.isPresent());
         assertEquals(testRetailFile.getId(), result.get().getId());
-        assertEquals("chain_001", result.get().getChainId());
 
         verify(retailFileRepository, times(1)).findById(testId);
     }
@@ -150,18 +144,18 @@ class RetailFileServiceTest {
         Page<RetailFile> page = new PageImpl<>(files);
         Pageable pageable = PageRequest.of(0, 20);
 
-        when(retailFileRepository.findWithFilters(eq("chain_001"), eq(123), eq(FileProcessingStatus.PENDING), any(Pageable.class)))
+        when(retailFileRepository.findWithFilters(eq(FileProcessingStatus.PENDING), any(Pageable.class)))
                 .thenReturn(page);
 
         // When
-        Page<RetailFile> result = retailFileService.findAllWithFilters("chain_001", 123, FileProcessingStatus.PENDING, 1, 20);
+        Page<RetailFile> result = retailFileService.findAllWithFilters(FileProcessingStatus.PENDING, 1, 20);
 
         // Then
         assertNotNull(result);
         assertEquals(1, result.getContent().size());
         assertEquals(testRetailFile.getId(), result.getContent().get(0).getId());
 
-        verify(retailFileRepository, times(1)).findWithFilters(eq("chain_001"), eq(123), eq(FileProcessingStatus.PENDING), any(Pageable.class));
+        verify(retailFileRepository, times(1)).findWithFilters(eq(FileProcessingStatus.PENDING), any(Pageable.class));
     }
 
     @Test
