@@ -1,5 +1,6 @@
 package com.avivse.retailfileservice.service;
 
+import com.avivse.retailfileservice.client.StoreServiceClient;
 import com.avivse.retailfileservice.dto.CreateRetailFileRequest;
 import com.avivse.retailfileservice.dto.UpdateRetailFileRequest;
 import com.avivse.retailfileservice.entity.RetailFile;
@@ -29,12 +30,16 @@ import java.util.UUID;
 public class RetailFileService {
 
     private final RetailFileRepository retailFileRepository;
+    private final StoreServiceClient storeServiceClient;
     private final Counter filesCreatedCounter;
     private final Counter duplicateFilesCounter;
 
     @Autowired
-    public RetailFileService(RetailFileRepository retailFileRepository, MeterRegistry meterRegistry) {
+    public RetailFileService(RetailFileRepository retailFileRepository,
+                           StoreServiceClient storeServiceClient,
+                           MeterRegistry meterRegistry) {
         this.retailFileRepository = retailFileRepository;
+        this.storeServiceClient = storeServiceClient;
 
         this.filesCreatedCounter = Counter.builder("retail_files_created_total")
                 .description("Total number of retail files created")
@@ -63,11 +68,15 @@ public class RetailFileService {
             throw new IllegalArgumentException("Duplicate file detected: file with same checksum already exists");
         }
 
+        // Get or create store ID using store service
+        UUID storeId = storeServiceClient.getOrCreateStoreId(request.getChainId(), request.getStoreNumber());
+
         RetailFile retailFile = new RetailFile();
         retailFile.setFileName(request.getFileName());
         retailFile.setFileUrl(request.getFileUrl());
         retailFile.setFileSize(request.getFileSize());
         retailFile.setChecksum(checksum);
+        retailFile.setStoreId(storeId);
 
         // Set upload date to now if not provided
         if (request.getUploadDate() != null) {

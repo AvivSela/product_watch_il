@@ -57,6 +57,9 @@ public class RetailFile {
     @Column(name = "checksum", length = 64)
     private String checksum;
 
+    @Column(name = "store_id")
+    private UUID storeId;
+
     // Default constructor (required by JPA)
     public RetailFile() {
     }
@@ -141,5 +144,13 @@ public class RetailFile {
 
     public void setChecksum(String checksum) {
         this.checksum = checksum;
+    }
+
+    public UUID getStoreId() {
+        return storeId;
+    }
+
+    public void setStoreId(UUID storeId) {
+        this.storeId = storeId;
     }
 }

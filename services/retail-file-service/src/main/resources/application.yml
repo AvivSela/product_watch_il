@@ -71,6 +71,11 @@ management:
         enabled: true
         histogram-flavor: prometheus
 
+# Application Configuration
+app:
+  store-service:
+    base-url: http://localhost:9090
+
 # Application Information
 info:
   app:

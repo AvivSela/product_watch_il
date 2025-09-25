@@ -1,5 +1,6 @@
 package com.avivse.retailfileservice.integration;
 
+import com.avivse.retailfileservice.client.StoreServiceClient;
 import com.avivse.retailfileservice.dto.CreateRetailFileRequest;
 import com.avivse.retailfileservice.dto.UpdateRetailFileRequest;
 import com.avivse.retailfileservice.entity.RetailFile;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
@@ -23,6 +25,7 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -44,9 +47,16 @@ class RetailFileIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @MockBean
+    private StoreServiceClient storeServiceClient;
+
     @BeforeEach
     void setUp() {
         retailFileRepository.deleteAll();
+
+        // Mock store service client to return a UUID for any chainId and storeNumber
+        when(storeServiceClient.getOrCreateStoreId("CHAIN001", 123))
+                .thenReturn(UUID.randomUUID());
     }
 
     @Test
