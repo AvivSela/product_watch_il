@@ -132,8 +132,8 @@ When adding new microservices:
 ## Important Notes
 
 ### Ports
-- **retail-file-service**: 8080
-- **store-service**: 9090
+- **retail-file-service**: 8001
+- **store-service**: 8000
 - **Prometheus**: 9090 (via docker-compose)
 - **Grafana**: 3000 (admin/admin)
 

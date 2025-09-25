@@ -4,9 +4,9 @@
 
 The Retail File Service is a Spring Boot microservice designed to manage retail file uploads and their metadata. It provides REST endpoints for creating, reading, updating, and deleting retail file records.
 
-**Base URL:** `http://localhost:8080`
+**Base URL:** `http://localhost:8001`
 **API Version:** v1
-**Service Port:** 8080
+**Service Port:** 8001
 
 ## Authentication
 
@@ -354,7 +354,7 @@ Marks a retail file as processed.
 
 ### Create a new retail file
 ```bash
-curl -X POST http://localhost:8080/v1/retail-files \
+curl -X POST http://localhost:8001/v1/retail-files \
   -H "Content-Type: application/json" \
   -d '{
     "chain_id": "CHAIN001",
@@ -367,17 +367,17 @@ curl -X POST http://localhost:8080/v1/retail-files \
 
 ### Get all files for a specific chain
 ```bash
-curl "http://localhost:8080/v1/retail-files?chainId=CHAIN001&page=1&limit=10"
+curl "http://localhost:8001/v1/retail-files?chainId=CHAIN001&page=1&limit=10"
 ```
 
 ### Mark a file as processed
 ```bash
-curl -X PATCH http://localhost:8080/v1/retail-files/550e8400-e29b-41d4-a716-446655440000/process
+curl -X PATCH http://localhost:8001/v1/retail-files/550e8400-e29b-41d4-a716-446655440000/process
 ```
 
 ### Update a file
 ```bash
-curl -X PUT http://localhost:8080/v1/retail-files/550e8400-e29b-41d4-a716-446655440000 \
+curl -X PUT http://localhost:8001/v1/retail-files/550e8400-e29b-41d4-a716-446655440000 \
   -H "Content-Type: application/json" \
   -d '{
     "file_name": "updated_sales_data.csv",
@@ -400,7 +400,7 @@ The service exposes several monitoring endpoints via Spring Boot Actuator:
 
 **Development Environment:**
 - **Database:** H2 in-memory database
-- **Console Access:** http://localhost:8080/h2-console
+- **Console Access:** http://localhost:8001/h2-console
 - **JDBC URL:** `jdbc:h2:mem:retailfiledb`
 - **Username:** `sa`
 - **Password:** (empty)
@@ -409,8 +409,8 @@ The service exposes several monitoring endpoints via Spring Boot Actuator:
 
 The service includes SpringDoc OpenAPI integration. When the service is running, you can access:
 
-- **OpenAPI JSON:** http://localhost:8080/v3/api-docs
-- **Swagger UI:** http://localhost:8080/swagger-ui.html
+- **OpenAPI JSON:** http://localhost:8001/v3/api-docs
+- **Swagger UI:** http://localhost:8001/swagger-ui.html
 
 ## CORS Configuration
 
