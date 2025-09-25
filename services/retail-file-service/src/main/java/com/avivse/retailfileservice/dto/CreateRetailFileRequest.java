@@ -30,6 +30,13 @@ public class CreateRetailFileRequest {
 
     private String checksum;
 
+    @NotNull(message = "Store number is required")
+    private Integer storeNumber;
+
+    @NotNull(message = "Chain ID is required")
+    @Size(max = 20, message = "Chain ID cannot exceed 20 characters")
+    private String chainId;
+
     // Default constructor
     public CreateRetailFileRequest() {
     }
@@ -82,5 +89,21 @@ public class CreateRetailFileRequest {
 
     public void setChecksum(String checksum) {
         this.checksum = checksum;
+    }
+
+    public Integer getStoreNumber() {
+        return storeNumber;
+    }
+
+    public void setStoreNumber(Integer storeNumber) {
+        this.storeNumber = storeNumber;
+    }
+
+    public String getChainId() {
+        return chainId;
+    }
+
+    public void setChainId(String chainId) {
+        this.chainId = chainId;
     }
 }

@@ -64,6 +64,8 @@ class RetailFileServiceTest {
         createRequest.setFileSize(1024L);
         createRequest.setUploadDate(LocalDateTime.of(2024, 1, 15, 10, 30));
         createRequest.setStatus(FileProcessingStatus.PENDING);
+        createRequest.setStoreNumber(123);
+        createRequest.setChainId("CHAIN001");
 
         // Create test UpdateRetailFileRequest
         updateRequest = new UpdateRetailFileRequest();

@@ -67,6 +67,8 @@ class RetailFileControllerTest {
         createRequest.setFileUrl("https://example.com/test_file.csv");
         createRequest.setFileSize(1024L);
         createRequest.setStatus(FileProcessingStatus.PENDING);
+        createRequest.setStoreNumber(123);
+        createRequest.setChainId("CHAIN001");
 
         when(retailFileService.createRetailFile(any(CreateRetailFileRequest.class)))
                 .thenReturn(testRetailFile);
@@ -89,6 +91,8 @@ class RetailFileControllerTest {
         CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
         invalidRequest.setFileName(""); // Missing required field
         invalidRequest.setFileUrl("https://example.com/test_file.csv");
+        invalidRequest.setStoreNumber(123);
+        invalidRequest.setChainId("CHAIN001");
 
         // When & Then
         mockMvc.perform(post("/v1/retail-files")
@@ -244,5 +248,100 @@ class RetailFileControllerTest {
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
 
         verify(retailFileService, times(1)).updateFileStatus(testId, FileProcessingStatus.COMPLETED);
+    }
+
+    @Test
+    void createRetailFile_ShouldReturn400_WhenStoreNumberIsNull() throws Exception {
+        // Given
+        CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
+        invalidRequest.setFileName("test_file.csv");
+        invalidRequest.setFileUrl("https://example.com/test_file.csv");
+        invalidRequest.setFileSize(1024L);
+        invalidRequest.setStoreNumber(null); // Missing required field
+        invalidRequest.setChainId("CHAIN001");
+
+        // When & Then
+        mockMvc.perform(post("/v1/retail-files")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+
+        verify(retailFileService, never()).createRetailFile(any(CreateRetailFileRequest.class));
+    }
+
+    @Test
+    void createRetailFile_ShouldReturn400_WhenChainIdIsNull() throws Exception {
+        // Given
+        CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
+        invalidRequest.setFileName("test_file.csv");
+        invalidRequest.setFileUrl("https://example.com/test_file.csv");
+        invalidRequest.setFileSize(1024L);
+        invalidRequest.setStoreNumber(123);
+        invalidRequest.setChainId(null); // Missing required field
+
+        // When & Then
+        mockMvc.perform(post("/v1/retail-files")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+
+        verify(retailFileService, never()).createRetailFile(any(CreateRetailFileRequest.class));
+    }
+
+    @Test
+    void createRetailFile_ShouldReturn400_WhenChainIdExceedsMaxLength() throws Exception {
+        // Given
+        CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
+        invalidRequest.setFileName("test_file.csv");
+        invalidRequest.setFileUrl("https://example.com/test_file.csv");
+        invalidRequest.setFileSize(1024L);
+        invalidRequest.setStoreNumber(123);
+        invalidRequest.setChainId("CHAIN_ID_TOO_LONG_EXCEEDS_20_CHARS"); // Exceeds 20 characters
+
+        // When & Then
+        mockMvc.perform(post("/v1/retail-files")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+
+        verify(retailFileService, never()).createRetailFile(any(CreateRetailFileRequest.class));
+    }
+
+    @Test
+    void createRetailFile_ShouldReturn400_WhenStoreNumberIsMissing() throws Exception {
+        // Given
+        CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
+        invalidRequest.setFileName("test_file.csv");
+        invalidRequest.setFileUrl("https://example.com/test_file.csv");
+        invalidRequest.setFileSize(1024L);
+        // storeNumber not set (null)
+        invalidRequest.setChainId("CHAIN001");
+
+        // When & Then
+        mockMvc.perform(post("/v1/retail-files")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+
+        verify(retailFileService, never()).createRetailFile(any(CreateRetailFileRequest.class));
+    }
+
+    @Test
+    void createRetailFile_ShouldReturn400_WhenChainIdIsMissing() throws Exception {
+        // Given
+        CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
+        invalidRequest.setFileName("test_file.csv");
+        invalidRequest.setFileUrl("https://example.com/test_file.csv");
+        invalidRequest.setFileSize(1024L);
+        invalidRequest.setStoreNumber(123);
+        // chainId not set (null)
+
+        // When & Then
+        mockMvc.perform(post("/v1/retail-files")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+
+        verify(retailFileService, never()).createRetailFile(any(CreateRetailFileRequest.class));
     }
 }

@@ -59,6 +59,8 @@ class RetailFileIntegrationTest {
         request.setFileSize(1024L);
         request.setUploadDate(LocalDateTime.of(2024, 1, 15, 10, 30));
         request.setStatus(FileProcessingStatus.PENDING);
+        request.setStoreNumber(123);
+        request.setChainId("CHAIN001");
 
         // When
         MvcResult result = mockMvc.perform(post("/v1/retail-files")
