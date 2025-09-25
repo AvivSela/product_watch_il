@@ -21,7 +21,7 @@ import java.util.*;
 
 @Tag(name = "Retail Files", description = "Operations for managing retail file records")
 @RestController
-@RequestMapping("/v1/retail-files")
+@RequestMapping("/api/v1/retail-files")
 @CrossOrigin(origins = "*")
 public class RetailFileController {
 
@@ -33,7 +33,7 @@ public class RetailFileController {
     }
 
     /**
-     * POST /v1/retail-files - Create a new retail file record
+     * POST /api/v1/retail-files - Create a new retail file record
      */
     @Operation(summary = "Create a new retail file record", description = "Creates a new retail file record in the system")
     @ApiResponses(value = {
@@ -47,7 +47,7 @@ public class RetailFileController {
     }
 
     /**
-     * GET /v1/retail-files/{id} - Get retail file by ID
+     * GET /api/v1/retail-files/{id} - Get retail file by ID
      */
     @GetMapping("/{id}")
     public ResponseEntity<RetailFile> getRetailFileById(@PathVariable UUID id) {
@@ -58,7 +58,7 @@ public class RetailFileController {
     }
 
     /**
-     * GET /v1/retail-files - List retail files with optional filters and pagination
+     * GET /api/v1/retail-files - List retail files with optional filters and pagination
      */
     @GetMapping
     public ResponseEntity<Map<String, Object>> listRetailFiles(
@@ -88,7 +88,7 @@ public class RetailFileController {
     }
 
     /**
-     * PUT /v1/retail-files/{id} - Update retail file
+     * PUT /api/v1/retail-files/{id} - Update retail file
      */
     @PutMapping("/{id}")
     public ResponseEntity<RetailFile> updateRetailFile(
@@ -105,7 +105,7 @@ public class RetailFileController {
     }
 
     /**
-     * DELETE /v1/retail-files/{id} - Delete retail file
+     * DELETE /api/v1/retail-files/{id} - Delete retail file
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRetailFile(@PathVariable UUID id) {
@@ -119,7 +119,7 @@ public class RetailFileController {
     }
 
     /**
-     * PATCH /v1/retail-files/{id}/status - Update file processing status
+     * PATCH /api/v1/retail-files/{id}/status - Update file processing status
      */
     @PatchMapping("/{id}/status")
     public ResponseEntity<RetailFile> updateFileStatus(
@@ -131,7 +131,7 @@ public class RetailFileController {
     }
 
     /**
-     * GET /v1/retail-files/duplicates/check - Check for duplicate files
+     * GET /api/v1/retail-files/duplicates/check - Check for duplicate files
      */
     @GetMapping("/duplicates/check")
     public ResponseEntity<Map<String, Boolean>> checkDuplicates(
