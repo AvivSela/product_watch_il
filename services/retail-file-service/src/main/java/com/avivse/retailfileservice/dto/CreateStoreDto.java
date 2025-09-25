@@ -1,31 +1,29 @@
-package com.avivse.storeservice.dto;
+package com.avivse.retailfileservice.dto;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class StoreCreateDTO {
+public class CreateStoreDto {
 
-    @NotNull(message = "Store number is required")
+    @JsonProperty("store_number")
     private Integer storeNumber;
-
-    @Size(max = 10, message = "Store type cannot exceed 10 characters")
+    @JsonProperty("store_type")
     private String storeType;
-
-    @Size(max = 100, message = "Store name cannot exceed 100 characters")
+    @JsonProperty("store_name")
     private String storeName;
-
-    @NotNull(message = "Chain ID is required")
-    @Size(max = 20, message = "Chain ID cannot exceed 20 characters")
+    @JsonProperty("chain_id")
     private String chainId;
-
-    @Positive(message = "Sub-chain ID must be positive")
+    @JsonProperty("sub_chain_id")
     private Integer subChainId;
 
-    @Size(max = 100, message = "Created by cannot exceed 100 characters")
-    private String createdBy;
+    public CreateStoreDto() {
+    }
 
-    public StoreCreateDTO() {
+    public CreateStoreDto(Integer storeNumber, String storeType, String storeName, String chainId, Integer subChainId) {
+        this.storeNumber = storeNumber;
+        this.storeType = storeType;
+        this.storeName = storeName;
+        this.chainId = chainId;
+        this.subChainId = subChainId;
     }
 
     public Integer getStoreNumber() {
@@ -66,13 +64,5 @@ public class StoreCreateDTO {
 
     public void setSubChainId(Integer subChainId) {
         this.subChainId = subChainId;
-    }
-
-    public String getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
     }
 }

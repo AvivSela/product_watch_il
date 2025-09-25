@@ -21,6 +21,7 @@ public class StoreMapper {
         store.setChainId(dto.getChainId());
         store.setSubChainId(dto.getSubChainId());
         store.setCreatedBy(dto.getCreatedBy());
+        store.setLastModifiedBy(dto.getCreatedBy()); // Set same as createdBy on creation
 
         return store;
     }

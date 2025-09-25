@@ -25,11 +25,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.mockito.ArgumentCaptor;
 
 @WebMvcTest(StoreController.class)
 class StoreControllerTest {
@@ -169,8 +171,8 @@ class StoreControllerTest {
         when(storeMapper.toResponseDTO(testStore)).thenReturn(responseDTO);
 
         mockMvc.perform(get("/api/v1/stores/by-natural-key")
-                        .param("chainId", "CHAIN001")
-                        .param("storeNumber", "123"))
+                        .param("chain_id", "CHAIN001")
+                        .param("store_number", "123"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(testId.toString()))
                 .andExpect(jsonPath("$.store_number").value(123))
@@ -185,8 +187,8 @@ class StoreControllerTest {
         when(storeService.findByChainIdAndStoreNumber("CHAIN001", 123)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/v1/stores/by-natural-key")
-                        .param("chainId", "CHAIN001")
-                        .param("storeNumber", "123"))
+                        .param("chain_id", "CHAIN001")
+                        .param("store_number", "123"))
                 .andExpect(status().isNotFound());
 
         verify(storeService).findByChainIdAndStoreNumber("CHAIN001", 123);
@@ -196,7 +198,7 @@ class StoreControllerTest {
     @Test
     void getStoreByNaturalKey_ShouldReturn400_WhenMissingParameters() throws Exception {
         mockMvc.perform(get("/api/v1/stores/by-natural-key")
-                        .param("chainId", "CHAIN001"))
+                        .param("chain_id", "CHAIN001"))
                 .andExpect(status().isBadRequest());
 
         verify(storeService, never()).findByChainIdAndStoreNumber(any(), any());
@@ -230,9 +232,9 @@ class StoreControllerTest {
         when(storeMapper.toResponseDTO(testStore)).thenReturn(responseDTO);
 
         mockMvc.perform(get("/api/v1/stores")
-                        .param("chainId", "CHAIN001")
-                        .param("storeType", "MAIN")
-                        .param("subChainId", "1"))
+                        .param("chain_id", "CHAIN001")
+                        .param("store_type", "MAIN")
+                        .param("sub_chain_id", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1));
 
@@ -302,5 +304,76 @@ class StoreControllerTest {
                 .andExpect(status().isNotFound());
 
         verify(storeService).deleteStore(testId);
+    }
+
+    @Test
+    void createStore_ShouldSetCreatedByFromHeader_WhenServiceHeaderProvided() throws Exception {
+        StoreCreateDTO createDTO = new StoreCreateDTO();
+        createDTO.setStoreNumber(123);
+        createDTO.setStoreType("MAIN");
+        createDTO.setStoreName("Test Store");
+        createDTO.setChainId("CHAIN001");
+        createDTO.setSubChainId(1);
+
+        ArgumentCaptor<StoreCreateDTO> captor = ArgumentCaptor.forClass(StoreCreateDTO.class);
+        when(storeService.createStore(captor.capture())).thenReturn(testStore);
+        when(storeMapper.toResponseDTO(testStore)).thenReturn(responseDTO);
+
+        mockMvc.perform(post("/api/v1/stores")
+                        .header("X-Service-Name", "retail-file-service")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createDTO)))
+                .andExpect(status().isCreated());
+
+        StoreCreateDTO capturedDTO = captor.getValue();
+        assertEquals("retail-file-service", capturedDTO.getCreatedBy());
+        verify(storeService).createStore(any(StoreCreateDTO.class));
+    }
+
+    @Test
+    void createStore_ShouldSetCreatedByAsUnknown_WhenNoServiceHeader() throws Exception {
+        StoreCreateDTO createDTO = new StoreCreateDTO();
+        createDTO.setStoreNumber(123);
+        createDTO.setStoreType("MAIN");
+        createDTO.setStoreName("Test Store");
+        createDTO.setChainId("CHAIN001");
+        createDTO.setSubChainId(1);
+
+        ArgumentCaptor<StoreCreateDTO> captor = ArgumentCaptor.forClass(StoreCreateDTO.class);
+        when(storeService.createStore(captor.capture())).thenReturn(testStore);
+        when(storeMapper.toResponseDTO(testStore)).thenReturn(responseDTO);
+
+        mockMvc.perform(post("/api/v1/stores")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createDTO)))
+                .andExpect(status().isCreated());
+
+        StoreCreateDTO capturedDTO = captor.getValue();
+        assertEquals("unknown", capturedDTO.getCreatedBy());
+        verify(storeService).createStore(any(StoreCreateDTO.class));
+    }
+
+    @Test
+    void createStore_ShouldSetCreatedByAsUnknown_WhenEmptyServiceHeader() throws Exception {
+        StoreCreateDTO createDTO = new StoreCreateDTO();
+        createDTO.setStoreNumber(123);
+        createDTO.setStoreType("MAIN");
+        createDTO.setStoreName("Test Store");
+        createDTO.setChainId("CHAIN001");
+        createDTO.setSubChainId(1);
+
+        ArgumentCaptor<StoreCreateDTO> captor = ArgumentCaptor.forClass(StoreCreateDTO.class);
+        when(storeService.createStore(captor.capture())).thenReturn(testStore);
+        when(storeMapper.toResponseDTO(testStore)).thenReturn(responseDTO);
+
+        mockMvc.perform(post("/api/v1/stores")
+                        .header("X-Service-Name", "   ")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createDTO)))
+                .andExpect(status().isCreated());
+
+        StoreCreateDTO capturedDTO = captor.getValue();
+        assertEquals("unknown", capturedDTO.getCreatedBy());
+        verify(storeService).createStore(any(StoreCreateDTO.class));
     }
 }

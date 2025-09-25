@@ -1,5 +1,6 @@
 package com.avivse.retailfileservice.service;
 
+import com.avivse.retailfileservice.client.StoreServiceClient;
 import com.avivse.retailfileservice.dto.CreateRetailFileRequest;
 import com.avivse.retailfileservice.dto.UpdateRetailFileRequest;
 import com.avivse.retailfileservice.entity.RetailFile;
@@ -33,6 +34,9 @@ class RetailFileServiceTest {
     @Mock
     private RetailFileRepository retailFileRepository;
 
+    @Mock
+    private StoreServiceClient storeServiceClient;
+
     private SimpleMeterRegistry meterRegistry;
 
     private RetailFileService retailFileService;
@@ -64,6 +68,8 @@ class RetailFileServiceTest {
         createRequest.setFileSize(1024L);
         createRequest.setUploadDate(LocalDateTime.of(2024, 1, 15, 10, 30));
         createRequest.setStatus(FileProcessingStatus.PENDING);
+        createRequest.setStoreNumber(123);
+        createRequest.setChainId("CHAIN001");
 
         // Create test UpdateRetailFileRequest
         updateRequest = new UpdateRetailFileRequest();
@@ -74,12 +80,14 @@ class RetailFileServiceTest {
         meterRegistry = new SimpleMeterRegistry();
 
         // Manually create the service with mocked dependencies
-        retailFileService = new RetailFileService(retailFileRepository, meterRegistry);
+        retailFileService = new RetailFileService(retailFileRepository, storeServiceClient, meterRegistry);
     }
 
     @Test
     void createRetailFile_ShouldCreateAndReturnRetailFile() {
         // Given
+        UUID mockStoreId = UUID.randomUUID();
+        when(storeServiceClient.getOrCreateStoreId("CHAIN001", 123)).thenReturn(mockStoreId);
         when(retailFileRepository.save(any(RetailFile.class))).thenReturn(testRetailFile);
 
         // When
@@ -90,6 +98,7 @@ class RetailFileServiceTest {
         assertEquals("test_file.csv", result.getFileName());
         assertEquals(FileProcessingStatus.PENDING, result.getStatus());
 
+        verify(storeServiceClient, times(1)).getOrCreateStoreId("CHAIN001", 123);
         verify(retailFileRepository, times(1)).save(any(RetailFile.class));
     }
 

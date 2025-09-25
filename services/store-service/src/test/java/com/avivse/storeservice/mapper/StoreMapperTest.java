@@ -44,6 +44,7 @@ class StoreMapperTest {
         assertEquals("CHAIN001", result.getChainId());
         assertEquals(1, result.getSubChainId());
         assertEquals("testuser", result.getCreatedBy());
+        assertEquals("testuser", result.getLastModifiedBy()); // Should be same as createdBy on creation
         assertNull(result.getId());
         assertNull(result.getCreatedAt());
         assertNull(result.getUpdatedAt());

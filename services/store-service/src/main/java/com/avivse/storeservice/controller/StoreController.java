@@ -52,9 +52,14 @@ public class StoreController {
         @ApiResponse(responseCode = "400", description = "Invalid request data"),
         @ApiResponse(responseCode = "409", description = "Store already exists with the same chainId and storeNumber")
     })
-    public ResponseEntity<StoreResponseDTO> createStore(@Valid @RequestBody StoreCreateDTO createDTO) {
-        logger.info("Creating store with chainId: {} and storeNumber: {}",
-                   createDTO.getChainId(), createDTO.getStoreNumber());
+    public ResponseEntity<StoreResponseDTO> createStore(
+            @Valid @RequestBody StoreCreateDTO createDTO,
+            @RequestHeader(value = "X-Service-Name", required = false) String serviceName) {
+        logger.info("Creating store with chainId: {} and storeNumber: {} from service: {}",
+                   createDTO.getChainId(), createDTO.getStoreNumber(), serviceName);
+
+        // Set createdBy based on service header, default to "unknown" if not provided
+        createDTO.setCreatedBy(serviceName != null && !serviceName.trim().isEmpty() ? serviceName : "unknown");
 
         Store createdStore = storeService.createStore(createDTO);
         StoreResponseDTO response = storeMapper.toResponseDTO(createdStore);
@@ -90,9 +95,9 @@ public class StoreController {
     })
     public ResponseEntity<StoreResponseDTO> getStoreByNaturalKey(
             @Parameter(description = "Chain ID", required = true)
-            @RequestParam @NotBlank @Size(max = 20) String chainId,
+            @RequestParam("chain_id") @NotBlank @Size(max = 20) String chainId,
             @Parameter(description = "Store number", required = true)
-            @RequestParam @NotNull Integer storeNumber) {
+            @RequestParam("store_number") @NotNull Integer storeNumber) {
         logger.debug("Getting store by chainId: {} and storeNumber: {}", chainId, storeNumber);
 
         Optional<Store> store = storeService.findByChainIdAndStoreNumber(chainId, storeNumber);
@@ -111,11 +116,11 @@ public class StoreController {
     })
     public ResponseEntity<Map<String, Object>> listStores(
             @Parameter(description = "Filter by chain ID")
-            @RequestParam(required = false) String chainId,
+            @RequestParam(value = "chain_id", required = false) String chainId,
             @Parameter(description = "Filter by store type")
-            @RequestParam(required = false) String storeType,
+            @RequestParam(value = "store_type", required = false) String storeType,
             @Parameter(description = "Filter by sub-chain ID")
-            @RequestParam(required = false) Integer subChainId,
+            @RequestParam(value = "sub_chain_id", required = false) Integer subChainId,
             @Parameter(description = "Page number (1-based)")
             @RequestParam(defaultValue = "1") @Positive int page,
             @Parameter(description = "Page size")

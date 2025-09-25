@@ -1,5 +1,6 @@
 package com.avivse.retailfileservice.integration;
 
+import com.avivse.retailfileservice.client.StoreServiceClient;
 import com.avivse.retailfileservice.dto.CreateRetailFileRequest;
 import com.avivse.retailfileservice.dto.UpdateRetailFileRequest;
 import com.avivse.retailfileservice.entity.RetailFile;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
@@ -23,6 +25,7 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -44,9 +47,16 @@ class RetailFileIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @MockBean
+    private StoreServiceClient storeServiceClient;
+
     @BeforeEach
     void setUp() {
         retailFileRepository.deleteAll();
+
+        // Mock store service client to return a UUID for any chainId and storeNumber
+        when(storeServiceClient.getOrCreateStoreId("CHAIN001", 123))
+                .thenReturn(UUID.randomUUID());
     }
 
     @Test
@@ -59,9 +69,11 @@ class RetailFileIntegrationTest {
         request.setFileSize(1024L);
         request.setUploadDate(LocalDateTime.of(2024, 1, 15, 10, 30));
         request.setStatus(FileProcessingStatus.PENDING);
+        request.setStoreNumber(123);
+        request.setChainId("CHAIN001");
 
         // When
-        MvcResult result = mockMvc.perform(post("/v1/retail-files")
+        MvcResult result = mockMvc.perform(post("/api/v1/retail-files")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -91,14 +103,14 @@ class RetailFileIntegrationTest {
         createTestFile("file3.csv", FileProcessingStatus.PENDING);
 
         // When & Then - Filter by chainId
-        mockMvc.perform(get("/v1/retail-files")
+        mockMvc.perform(get("/api/v1/retail-files")
                         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data", hasSize(3)))
                 .andExpect(jsonPath("$.pagination.total").value(3));
 
         // When & Then - Filter by processing status
-        mockMvc.perform(get("/v1/retail-files")
+        mockMvc.perform(get("/api/v1/retail-files")
                         .param("status", "PENDING"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data", hasSize(2)))
@@ -118,7 +130,7 @@ class RetailFileIntegrationTest {
         updateRequest.setStatus(FileProcessingStatus.COMPLETED);
 
         // When
-        mockMvc.perform(put("/v1/retail-files/{id}", originalFile.getId())
+        mockMvc.perform(put("/api/v1/retail-files/{id}", originalFile.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
@@ -147,7 +159,7 @@ class RetailFileIntegrationTest {
         UUID fileId = file.getId();
 
         // When
-        mockMvc.perform(delete("/v1/retail-files/{id}", fileId))
+        mockMvc.perform(delete("/api/v1/retail-files/{id}", fileId))
                 .andExpect(status().isNoContent());
 
         // Then - Verify removed from database
