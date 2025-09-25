@@ -3,6 +3,7 @@ package com.avivse.retailfileservice.dto;
 import com.avivse.retailfileservice.enums.FileProcessingStatus;
 import com.avivse.retailfileservice.validation.ValidFileType;
 import com.avivse.retailfileservice.validation.ValidUrl;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -15,15 +16,19 @@ public class CreateRetailFileRequest {
     @NotBlank(message = "File name is required")
     @Size(max = 255, message = "File name cannot exceed 255 characters")
     @ValidFileType
+    @JsonProperty("file_name")
     private String fileName;
 
     @NotBlank(message = "File URL is required")
     @Size(max = 500, message = "File URL cannot exceed 500 characters")
     @ValidUrl
+    @JsonProperty("file_url")
     private String fileUrl;
 
+    @JsonProperty("file_size")
     private Long fileSize;
 
+    @JsonProperty("upload_date")
     private LocalDateTime uploadDate; // Optional - will default to now if not provided
 
     private FileProcessingStatus status = FileProcessingStatus.PENDING;
@@ -31,10 +36,12 @@ public class CreateRetailFileRequest {
     private String checksum;
 
     @NotNull(message = "Store number is required")
+    @JsonProperty("store_number")
     private Integer storeNumber;
 
     @NotNull(message = "Chain ID is required")
     @Size(max = 20, message = "Chain ID cannot exceed 20 characters")
+    @JsonProperty("chain_id")
     private String chainId;
 
     // Default constructor

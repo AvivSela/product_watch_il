@@ -50,7 +50,7 @@ class StoreIntegrationTest {
         createDTO.setStoreName("Integration Test Store");
         createDTO.setChainId("CHAIN001");
         createDTO.setSubChainId(1);
-        createDTO.setCreatedBy("integrationtest");
+        // Note: createdBy will be set by service header, not in DTO
 
         storeRepository.deleteAll();
     }
@@ -70,11 +70,31 @@ class StoreIntegrationTest {
         assertEquals("Integration Test Store", responseDTO.getStoreName());
         assertEquals("CHAIN001", responseDTO.getChainId());
         assertEquals(1, responseDTO.getSubChainId());
-        assertEquals("integrationtest", responseDTO.getCreatedBy());
+        assertEquals("unknown", responseDTO.getCreatedBy()); // No header sent, so defaults to "unknown"
+        assertEquals("unknown", responseDTO.getLastModifiedBy()); // Should be same as createdBy on creation
         assertNotNull(responseDTO.getCreatedAt());
         assertNotNull(responseDTO.getUpdatedAt());
         assertEquals(0, responseDTO.getVersion());
 
+        assertEquals(1, storeRepository.count());
+    }
+
+    @Test
+    void createStore_ShouldSetCreatedByFromHeader() {
+        // Create request with service header
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Service-Name", "integrationtest");
+        HttpEntity<StoreCreateDTO> request = new HttpEntity<>(createDTO, headers);
+
+        ResponseEntity<StoreResponseDTO> response = restTemplate.postForEntity(
+                baseUrl, request, StoreResponseDTO.class);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNotNull(response.getBody());
+
+        StoreResponseDTO responseDTO = response.getBody();
+        assertEquals("integrationtest", responseDTO.getCreatedBy()); // Should use header value
+        assertEquals("integrationtest", responseDTO.getLastModifiedBy()); // Should be same as createdBy on creation
         assertEquals(1, storeRepository.count());
     }
 
@@ -128,7 +148,7 @@ class StoreIntegrationTest {
     void getStoreByNaturalKey_ShouldReturnStore_WhenExists() {
         restTemplate.postForEntity(baseUrl, createDTO, StoreResponseDTO.class);
 
-        String naturalKeyUrl = baseUrl + "/by-natural-key?chainId=CHAIN001&storeNumber=123";
+        String naturalKeyUrl = baseUrl + "/by-natural-key?chain_id=CHAIN001&store_number=123";
         ResponseEntity<StoreResponseDTO> response = restTemplate.getForEntity(
                 naturalKeyUrl, StoreResponseDTO.class);
 
@@ -140,7 +160,7 @@ class StoreIntegrationTest {
 
     @Test
     void getStoreByNaturalKey_ShouldReturn404_WhenNotExists() {
-        String naturalKeyUrl = baseUrl + "/by-natural-key?chainId=NONEXISTENT&storeNumber=999";
+        String naturalKeyUrl = baseUrl + "/by-natural-key?chain_id=NONEXISTENT&store_number=999";
         ResponseEntity<String> response = restTemplate.getForEntity(
                 naturalKeyUrl, String.class);
 
@@ -149,7 +169,7 @@ class StoreIntegrationTest {
 
     @Test
     void getStoreByNaturalKey_ShouldReturn400_WhenMissingParameters() {
-        String naturalKeyUrl = baseUrl + "/by-natural-key?chainId=CHAIN001";
+        String naturalKeyUrl = baseUrl + "/by-natural-key?chain_id=CHAIN001";
         ResponseEntity<String> response = restTemplate.getForEntity(
                 naturalKeyUrl, String.class);
 
@@ -200,7 +220,7 @@ class StoreIntegrationTest {
         secondStore.setSubChainId(2);
         restTemplate.postForEntity(baseUrl, secondStore, StoreResponseDTO.class);
 
-        String filteredUrl = baseUrl + "?chainId=CHAIN001";
+        String filteredUrl = baseUrl + "?chain_id=CHAIN001";
         ResponseEntity<Map> response = restTemplate.getForEntity(filteredUrl, Map.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -285,7 +305,7 @@ class StoreIntegrationTest {
                 baseUrl + "/" + storeId, StoreResponseDTO.class);
         assertEquals(HttpStatus.OK, getResponse.getStatusCode());
 
-        String naturalKeyUrl = baseUrl + "/by-natural-key?chainId=CHAIN001&storeNumber=123";
+        String naturalKeyUrl = baseUrl + "/by-natural-key?chain_id=CHAIN001&store_number=123";
         ResponseEntity<StoreResponseDTO> naturalKeyResponse = restTemplate.getForEntity(
                 naturalKeyUrl, StoreResponseDTO.class);
         assertEquals(HttpStatus.OK, naturalKeyResponse.getStatusCode());

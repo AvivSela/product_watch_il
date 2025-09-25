@@ -1,11 +1,18 @@
 package com.avivse.retailfileservice.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class CreateStoreDto {
 
+    @JsonProperty("store_number")
     private Integer storeNumber;
+    @JsonProperty("store_type")
     private String storeType;
+    @JsonProperty("store_name")
     private String storeName;
+    @JsonProperty("chain_id")
     private String chainId;
+    @JsonProperty("sub_chain_id")
     private Integer subChainId;
 
     public CreateStoreDto() {

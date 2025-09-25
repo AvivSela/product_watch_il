@@ -1,4 +1,4 @@
-package com.avivse.retailfileservice.config;
+package com.avivse.storeservice.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.core.jackson.ModelResolver;
@@ -12,11 +12,11 @@ import org.springframework.context.annotation.Configuration;
 public class OpenApiConfig {
 
     @Bean
-    public OpenAPI retailFileServiceOpenAPI() {
+    public OpenAPI storeServiceOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Retail File API")
-                        .description("API for managing file uploads and processing for retail chains and stores")
+                        .title("Store API")
+                        .description("API for managing store information and operations")
                         .version("1.0.0")
                         .contact(new Contact()
                                 .name("Aviv")

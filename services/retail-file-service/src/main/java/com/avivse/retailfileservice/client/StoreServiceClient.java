@@ -5,6 +5,8 @@ import com.avivse.retailfileservice.dto.StoreDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -35,8 +37,8 @@ public class StoreServiceClient {
 
             String url = UriComponentsBuilder.fromUriString(storeServiceBaseUrl)
                     .path("/api/v1/stores/by-natural-key")
-                    .queryParam("chainId", chainId)
-                    .queryParam("storeNumber", storeNumber)
+                    .queryParam("chain_id", chainId)
+                    .queryParam("store_number", storeNumber)
                     .toUriString();
 
             ResponseEntity<StoreDto> response = restTemplate.getForEntity(url, StoreDto.class);
@@ -63,7 +65,12 @@ public class StoreServiceClient {
 
             String url = storeServiceBaseUrl + "/api/v1/stores";
 
-            ResponseEntity<StoreDto> response = restTemplate.postForEntity(url, createStoreDto, StoreDto.class);
+            // Add service identification header
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Service-Name", "retail-file-service");
+            HttpEntity<CreateStoreDto> request = new HttpEntity<>(createStoreDto, headers);
+
+            ResponseEntity<StoreDto> response = restTemplate.postForEntity(url, request, StoreDto.class);
 
             if (response.getStatusCode() == HttpStatus.CREATED && response.getBody() != null) {
                 logger.info("Created new store with ID: {}", response.getBody().getId());
