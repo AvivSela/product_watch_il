@@ -11,7 +11,8 @@ This is a **monorepo** for the Product Watch Platform containing multiple micros
 ```
 product-watch-platform/
 ├── services/
-│   └── retail-file-service/          # Spring Boot microservice for retail file management
+│   ├── retail-file-service/          # Spring Boot microservice for retail file management
+│   └── store-service/                # Spring Boot microservice for store management
 ├── infrastructure/
 │   ├── monitoring/                   # Prometheus and Grafana configurations
 │   └── docker/                       # Docker configurations
@@ -36,8 +37,10 @@ mvn clean package -f root-pom.xml
 
 ### Individual Service
 ```bash
-# Navigate to service directory
+# Navigate to service directory (example with retail-file-service)
 cd services/retail-file-service
+# OR
+cd services/store-service
 
 # Build the service
 mvn clean compile
@@ -77,15 +80,18 @@ docker-compose down
 
 ### Current Services
 - **retail-file-service**: Spring Boot microservice for managing retail file uploads
+- **store-service**: Spring Boot microservice for managing store information
 
-### Service Structure (retail-file-service)
-- **Main Application**: `RetailFileServiceApplication.java` - Standard Spring Boot entry point
+### Service Structure (Common Pattern)
+Both services follow the standard Spring Boot layered architecture:
+- **Main Application**: `*ServiceApplication.java` - Standard Spring Boot entry point
 - **Controller Layer**: REST endpoints in `controller/` package
 - **Service Layer**: Business logic in `service/` package
 - **Repository Layer**: Data access via Spring Data JPA in `repository/`
 - **Entity**: JPA entities in `entity/` package
 - **DTOs**: Request/response objects in `dto/` package
 - **Exception Handling**: Custom exceptions and global handler
+- **Configuration**: OpenAPI config in `config/` package
 
 ### Key Technologies
 - **Framework**: Spring Boot 3.3.6 with Java 17
@@ -96,12 +102,14 @@ docker-compose down
 - **Testing**: JUnit with Spring Boot Test
 
 ### Configuration
-- **Application**: `services/retail-file-service/src/main/resources/application.yml`
+- **Application Config**: Each service has `src/main/resources/application.yml`
 - **Database**: H2 console available at `/h2-console` (development)
 - **Metrics**: Available at `/actuator/prometheus`
 - **Health**: Available at `/actuator/health`
-- **OpenAPI/Swagger**: Available at `/swagger-ui.html`
-- **API Documentation**: `services/retail-file-service/API_DOCUMENTATION.md`
+- **OpenAPI/Swagger**: Available at service-specific paths:
+  - retail-file-service: `/swagger-ui.html`
+  - store-service: `/docs`
+- **API Documentation**: Each service may have its own API documentation
 
 ## Maven Multi-Module Configuration
 
@@ -125,11 +133,13 @@ When adding new microservices:
 
 ### Ports
 - **retail-file-service**: 8080
-- **Prometheus**: 9090
+- **store-service**: 9090
+- **Prometheus**: 9090 (via docker-compose)
 - **Grafana**: 3000 (admin/admin)
 
 ### Package Structure
 - **retail-file-service**: `com.avivse.retailfileservice` base package
+- **store-service**: `com.avivse.storeservice` base package
 
 ### Actuator Endpoints
 Management endpoints exposed: health, info, metrics, prometheus, env, loggers
