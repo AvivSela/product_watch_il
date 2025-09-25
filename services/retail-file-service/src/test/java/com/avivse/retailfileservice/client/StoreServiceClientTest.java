@@ -30,7 +30,7 @@ class StoreServiceClientTest {
 
     private StoreServiceClient storeServiceClient;
 
-    private final String storeServiceBaseUrl = "http://localhost:9090";
+    private final String storeServiceBaseUrl = "http://localhost:8000";
 
     @BeforeEach
     void setUp() {
