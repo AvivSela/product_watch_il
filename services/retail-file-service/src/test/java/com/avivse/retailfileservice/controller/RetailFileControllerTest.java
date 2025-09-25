@@ -50,8 +50,6 @@ class RetailFileControllerTest {
         // Create test RetailFile entity (used in multiple tests)
         testRetailFile = new RetailFile();
         testRetailFile.setId(testId);
-        testRetailFile.setChainId("chain_001");
-        testRetailFile.setStoreId(123);
         testRetailFile.setFileName("test_file.csv");
         testRetailFile.setFileUrl("https://example.com/test_file.csv");
         testRetailFile.setFileSize(1024L);
@@ -65,8 +63,6 @@ class RetailFileControllerTest {
     void createRetailFile_ShouldReturn201_WhenValidRequest() throws Exception {
         // Given - create request locally since only used in this test
         CreateRetailFileRequest createRequest = new CreateRetailFileRequest();
-        createRequest.setChainId("chain_001");
-        createRequest.setStoreId(123);
         createRequest.setFileName("test_file.csv");
         createRequest.setFileUrl("https://example.com/test_file.csv");
         createRequest.setFileSize(1024L);
@@ -81,7 +77,6 @@ class RetailFileControllerTest {
                         .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(testId.toString()))
-                .andExpect(jsonPath("$.chain_id").value("chain_001"))
                 .andExpect(jsonPath("$.file_name").value("test_file.csv"))
                 .andExpect(jsonPath("$.status").value("PENDING"));
 
@@ -92,8 +87,7 @@ class RetailFileControllerTest {
     void createRetailFile_ShouldReturn400_WhenInvalidRequest() throws Exception {
         // Given - create invalid request locally
         CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
-        invalidRequest.setChainId(null); // Missing required field
-        invalidRequest.setFileName("test_file.csv");
+        invalidRequest.setFileName(""); // Missing required field
         invalidRequest.setFileUrl("https://example.com/test_file.csv");
 
         // When & Then
@@ -114,7 +108,6 @@ class RetailFileControllerTest {
         mockMvc.perform(get("/v1/retail-files/{id}", testId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(testId.toString()))
-                .andExpect(jsonPath("$.chain_id").value("chain_001"))
                 .andExpect(jsonPath("$.file_name").value("test_file.csv"));
 
         verify(retailFileService, times(1)).findById(testId);
@@ -138,7 +131,7 @@ class RetailFileControllerTest {
         List<RetailFile> files = List.of(testRetailFile);
         Page<RetailFile> page = new PageImpl<>(files);
 
-        when(retailFileService.findAllWithFilters(null, null, null, 1, 20))
+        when(retailFileService.findAllWithFilters(null, 1, 20))
                 .thenReturn(page);
 
         // When & Then
@@ -150,7 +143,7 @@ class RetailFileControllerTest {
                 .andExpect(jsonPath("$.pagination.limit").value(20))
                 .andExpect(jsonPath("$.pagination.total").value(1));
 
-        verify(retailFileService, times(1)).findAllWithFilters(null, null, null, 1, 20);
+        verify(retailFileService, times(1)).findAllWithFilters(null, 1, 20);
     }
 
     @Test
@@ -159,18 +152,16 @@ class RetailFileControllerTest {
         List<RetailFile> files = List.of(testRetailFile);
         Page<RetailFile> page = new PageImpl<>(files);
 
-        when(retailFileService.findAllWithFilters("chain_001", 123, FileProcessingStatus.PENDING, 1, 20))
+        when(retailFileService.findAllWithFilters(FileProcessingStatus.PENDING, 1, 20))
                 .thenReturn(page);
 
         // When & Then
         mockMvc.perform(get("/v1/retail-files")
-                        .param("chainId", "chain_001")
-                        .param("storeId", "123")
                         .param("status", "PENDING"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1));
 
-        verify(retailFileService, times(1)).findAllWithFilters("chain_001", 123, FileProcessingStatus.PENDING, 1, 20);
+        verify(retailFileService, times(1)).findAllWithFilters(FileProcessingStatus.PENDING, 1, 20);
     }
 
     @Test

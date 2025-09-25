@@ -62,8 +62,6 @@ public class RetailFileController {
      */
     @GetMapping
     public ResponseEntity<Map<String, Object>> listRetailFiles(
-            @RequestParam(required = false) String chainId,
-            @RequestParam(required = false) Integer storeId,
             @RequestParam(required = false) FileProcessingStatus status,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit) {
@@ -73,7 +71,7 @@ public class RetailFileController {
         if (limit < 1 || limit > 100) limit = 20;
 
         Page<RetailFile> result = retailFileService.findAllWithFilters(
-                chainId, storeId, status, page, limit);
+                status, page, limit);
 
         // Build response according to API specification
         Map<String, Object> response = new HashMap<>();
@@ -137,18 +135,13 @@ public class RetailFileController {
      */
     @GetMapping("/duplicates/check")
     public ResponseEntity<Map<String, Boolean>> checkDuplicates(
-            @RequestParam String chainId,
-            @RequestParam String fileName,
-            @RequestParam String fileUrl,
             @RequestParam(required = false) String checksum) {
 
-        boolean isDuplicateByMetadata = retailFileService.isDuplicateFile(chainId, fileName, fileUrl);
         boolean isDuplicateByChecksum = checksum != null && retailFileService.isDuplicateFileByChecksum(checksum);
 
         Map<String, Boolean> result = new HashMap<>();
-        result.put("duplicateByMetadata", isDuplicateByMetadata);
         result.put("duplicateByChecksum", isDuplicateByChecksum);
-        result.put("isDuplicate", isDuplicateByMetadata || isDuplicateByChecksum);
+        result.put("isDuplicate", isDuplicateByChecksum);
 
         return ResponseEntity.ok(result);
     }

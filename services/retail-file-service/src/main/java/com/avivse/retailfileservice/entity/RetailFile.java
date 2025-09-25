@@ -29,13 +29,6 @@ public class RetailFile {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @NotBlank(message = "Chain ID is required")
-    @Size(max = 100, message = "Chain ID cannot exceed 100 characters")
-    @Column(name = "chain_id", nullable = false, length = 100)
-    private String chainId;
-
-    @Column(name = "store_id")
-    private Integer storeId;
 
     @NotBlank(message = "File name is required")
     @Size(max = 255, message = "File name cannot exceed 255 characters")
@@ -69,8 +62,7 @@ public class RetailFile {
     }
 
     // Constructor with required fields
-    public RetailFile(String chainId, String fileName, String fileUrl, LocalDateTime uploadDate) {
-        this.chainId = chainId;
+    public RetailFile(String fileName, String fileUrl, LocalDateTime uploadDate) {
         this.fileName = fileName;
         this.fileUrl = fileUrl;
         this.uploadDate = uploadDate;
@@ -102,21 +94,6 @@ public class RetailFile {
         this.updatedAt = updatedAt;
     }
 
-    public String getChainId() {
-        return chainId;
-    }
-
-    public void setChainId(String chainId) {
-        this.chainId = chainId;
-    }
-
-    public Integer getStoreId() {
-        return storeId;
-    }
-
-    public void setStoreId(Integer storeId) {
-        this.storeId = storeId;
-    }
 
     public String getFileName() {
         return fileName;

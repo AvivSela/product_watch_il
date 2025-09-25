@@ -10,10 +10,6 @@ import java.time.LocalDateTime;
 
 public class UpdateRetailFileRequest {
 
-    @Size(max = 100, message = "Chain ID cannot exceed 100 characters")
-    private String chainId;
-
-    private Integer storeId;
 
     @Size(max = 255, message = "File name cannot exceed 255 characters")
     @ValidFileType
@@ -36,21 +32,6 @@ public class UpdateRetailFileRequest {
     }
 
     // Getters and Setters
-    public String getChainId() {
-        return chainId;
-    }
-
-    public void setChainId(String chainId) {
-        this.chainId = chainId;
-    }
-
-    public Integer getStoreId() {
-        return storeId;
-    }
-
-    public void setStoreId(Integer storeId) {
-        this.storeId = storeId;
-    }
 
     public String getFileName() {
         return fileName;

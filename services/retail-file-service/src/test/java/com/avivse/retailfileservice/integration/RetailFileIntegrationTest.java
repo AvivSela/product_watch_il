@@ -54,8 +54,6 @@ class RetailFileIntegrationTest {
     void createRetailFile_ShouldCreateAndPersistToDatabase() throws Exception {
         // Given
         CreateRetailFileRequest request = new CreateRetailFileRequest();
-        request.setChainId("chain_001");
-        request.setStoreId(123);
         request.setFileName("integration_test.csv");
         request.setFileUrl("https://example.com/integration_test.csv");
         request.setFileSize(1024L);
@@ -67,7 +65,6 @@ class RetailFileIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.chain_id").value("chain_001"))
                 .andExpect(jsonPath("$.file_name").value("integration_test.csv"))
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andReturn();
@@ -78,7 +75,6 @@ class RetailFileIntegrationTest {
 
         RetailFile savedFile = retailFileRepository.findById(responseFile.getId()).orElse(null);
         assertNotNull(savedFile);
-        assertEquals("chain_001", savedFile.getChainId());
         assertEquals("integration_test.csv", savedFile.getFileName());
         assertEquals(FileProcessingStatus.PENDING, savedFile.getStatus());
         assertEquals(1024L, savedFile.getFileSize());
@@ -90,16 +86,16 @@ class RetailFileIntegrationTest {
     @Transactional
     void listRetailFiles_ShouldApplyFilters() throws Exception {
         // Given
-        createTestFile("chain_001", 123, "file1.csv", FileProcessingStatus.PENDING);
-        createTestFile("chain_001", 124, "file2.csv", FileProcessingStatus.COMPLETED);
-        createTestFile("chain_002", 125, "file3.csv", FileProcessingStatus.PENDING);
+        createTestFile("file1.csv", FileProcessingStatus.PENDING);
+        createTestFile("file2.csv", FileProcessingStatus.COMPLETED);
+        createTestFile("file3.csv", FileProcessingStatus.PENDING);
 
         // When & Then - Filter by chainId
         mockMvc.perform(get("/v1/retail-files")
-                        .param("chainId", "chain_001"))
+                        )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data", hasSize(2)))
-                .andExpect(jsonPath("$.pagination.total").value(2));
+                .andExpect(jsonPath("$.data", hasSize(3)))
+                .andExpect(jsonPath("$.pagination.total").value(3));
 
         // When & Then - Filter by processing status
         mockMvc.perform(get("/v1/retail-files")
@@ -113,7 +109,7 @@ class RetailFileIntegrationTest {
     @Transactional
     void updateRetailFile_ShouldUpdateInDatabase() throws Exception {
         // Given - Create file in database
-        RetailFile originalFile = createTestFile("chain_001", 123, "original.csv", FileProcessingStatus.PENDING);
+        RetailFile originalFile = createTestFile("original.csv", FileProcessingStatus.PENDING);
         Long originalFileSize = originalFile.getFileSize();
         FileProcessingStatus originalStatus = originalFile.getStatus();
 
@@ -147,7 +143,7 @@ class RetailFileIntegrationTest {
     @Transactional
     void deleteRetailFile_ShouldRemoveFromDatabase() throws Exception {
         // Given
-        RetailFile file = createTestFile("chain_001", 123, "delete_test.csv", FileProcessingStatus.PENDING);
+        RetailFile file = createTestFile("delete_test.csv", FileProcessingStatus.PENDING);
         UUID fileId = file.getId();
 
         // When
@@ -160,10 +156,8 @@ class RetailFileIntegrationTest {
 
 
     // Helper method to create test files in database
-    private RetailFile createTestFile(String chainId, Integer storeId, String fileName, FileProcessingStatus status) {
+    private RetailFile createTestFile(String fileName, FileProcessingStatus status) {
         RetailFile file = new RetailFile();
-        file.setChainId(chainId);
-        file.setStoreId(storeId);
         file.setFileName(fileName);
         file.setFileUrl("https://example.com/" + fileName);
         file.setFileSize(1024L);

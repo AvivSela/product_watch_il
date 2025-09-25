@@ -49,13 +49,6 @@ public class RetailFileService {
      * Create retail file from CreateRetailFileRequest DTO with duplicate detection
      */
     public RetailFile createRetailFile(CreateRetailFileRequest request) {
-        // Check for duplicates by file metadata
-        if (retailFileRepository.existsByChainIdAndFileNameAndFileUrl(
-                request.getChainId(), request.getFileName(), request.getFileUrl())) {
-            duplicateFilesCounter.increment();
-            throw new IllegalArgumentException("Duplicate file detected: same chain ID, file name, and URL already exist");
-        }
-
         // Generate checksum if provided
         String checksum = null;
         if (request.getChecksum() != null) {
@@ -71,8 +64,6 @@ public class RetailFileService {
         }
 
         RetailFile retailFile = new RetailFile();
-        retailFile.setChainId(request.getChainId());
-        retailFile.setStoreId(request.getStoreId());
         retailFile.setFileName(request.getFileName());
         retailFile.setFileUrl(request.getFileUrl());
         retailFile.setFileSize(request.getFileSize());
@@ -110,12 +101,6 @@ public class RetailFileService {
         RetailFile fileToUpdate = existingFile.get();
 
         // Update only the fields that are provided (not null and not blank)
-        if (request.getChainId() != null && !request.getChainId().trim().isEmpty()) {
-            fileToUpdate.setChainId(request.getChainId());
-        }
-        if (request.getStoreId() != null) {
-            fileToUpdate.setStoreId(request.getStoreId());
-        }
         if (request.getFileName() != null && !request.getFileName().trim().isEmpty()) {
             fileToUpdate.setFileName(request.getFileName());
         }
@@ -150,21 +135,13 @@ public class RetailFileService {
      * Find all retail files with optional filters and pagination
      */
     @Transactional(readOnly = true)
-    public Page<RetailFile> findAllWithFilters(String chainId, Integer storeId, FileProcessingStatus status,
-                                               int page, int limit) {
+    public Page<RetailFile> findAllWithFilters(FileProcessingStatus status, int page, int limit) {
         // Create pageable with sorting by upload date (newest first)
         Pageable pageable = PageRequest.of(page - 1, limit, Sort.by("uploadDate").descending());
 
-        return retailFileRepository.findWithFilters(chainId, storeId, status, pageable);
+        return retailFileRepository.findWithFilters(status, pageable);
     }
 
-    /**
-     * Find files by chain ID
-     */
-    @Transactional(readOnly = true)
-    public List<RetailFile> findByChainId(String chainId) {
-        return retailFileRepository.findByChainId(chainId);
-    }
 
     /**
      * Find files by processing status
@@ -189,13 +166,6 @@ public class RetailFileService {
         return retailFileRepository.save(file);
     }
 
-    /**
-     * Check for duplicate files
-     */
-    @Transactional(readOnly = true)
-    public boolean isDuplicateFile(String chainId, String fileName, String fileUrl) {
-        return retailFileRepository.existsByChainIdAndFileNameAndFileUrl(chainId, fileName, fileUrl);
-    }
 
     /**
      * Check for duplicate files by checksum
