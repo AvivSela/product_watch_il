@@ -3,6 +3,7 @@ package com.avivse.retailfileservice.entity;
 import com.avivse.retailfileservice.enums.FileProcessingStatus;
 import com.avivse.retailfileservice.validation.ValidFileType;
 import com.avivse.retailfileservice.validation.ValidUrl;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -23,10 +24,12 @@ public class RetailFile {
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
+    @JsonProperty("created_at")
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
+    @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
 
 
@@ -34,19 +37,23 @@ public class RetailFile {
     @Size(max = 255, message = "File name cannot exceed 255 characters")
     @ValidFileType
     @Column(name = "file_name", nullable = false, length = 255)
+    @JsonProperty("file_name")
     private String fileName;
 
     @NotBlank(message = "File URL is required")
     @Size(max = 500, message = "File URL cannot exceed 500 characters")
     @ValidUrl
     @Column(name = "file_url", nullable = false, length = 500)
+    @JsonProperty("file_url")
     private String fileUrl;
 
     @Column(name = "file_size")
+    @JsonProperty("file_size")
     private Long fileSize;
 
     @NotNull(message = "Upload date is required")
     @Column(name = "upload_date", nullable = false)
+    @JsonProperty("upload_date")
     private LocalDateTime uploadDate;
 
     @NotNull(message = "Processing status is required")

@@ -73,7 +73,7 @@ class RetailFileIntegrationTest {
         request.setChainId("CHAIN001");
 
         // When
-        MvcResult result = mockMvc.perform(post("/v1/retail-files")
+        MvcResult result = mockMvc.perform(post("/api/v1/retail-files")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -103,14 +103,14 @@ class RetailFileIntegrationTest {
         createTestFile("file3.csv", FileProcessingStatus.PENDING);
 
         // When & Then - Filter by chainId
-        mockMvc.perform(get("/v1/retail-files")
+        mockMvc.perform(get("/api/v1/retail-files")
                         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data", hasSize(3)))
                 .andExpect(jsonPath("$.pagination.total").value(3));
 
         // When & Then - Filter by processing status
-        mockMvc.perform(get("/v1/retail-files")
+        mockMvc.perform(get("/api/v1/retail-files")
                         .param("status", "PENDING"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data", hasSize(2)))
@@ -130,7 +130,7 @@ class RetailFileIntegrationTest {
         updateRequest.setStatus(FileProcessingStatus.COMPLETED);
 
         // When
-        mockMvc.perform(put("/v1/retail-files/{id}", originalFile.getId())
+        mockMvc.perform(put("/api/v1/retail-files/{id}", originalFile.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
@@ -159,7 +159,7 @@ class RetailFileIntegrationTest {
         UUID fileId = file.getId();
 
         // When
-        mockMvc.perform(delete("/v1/retail-files/{id}", fileId))
+        mockMvc.perform(delete("/api/v1/retail-files/{id}", fileId))
                 .andExpect(status().isNoContent());
 
         // Then - Verify removed from database
