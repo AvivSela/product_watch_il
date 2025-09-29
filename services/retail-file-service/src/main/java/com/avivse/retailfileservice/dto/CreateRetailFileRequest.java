@@ -2,7 +2,8 @@ package com.avivse.retailfileservice.dto;
 
 import com.avivse.retailfileservice.enums.FileProcessingStatus;
 import com.avivse.retailfileservice.validation.ValidFileType;
-import com.avivse.retailfileservice.validation.ValidUrl;
+import com.avivse.retailfileservice.validation.ValidObjectKey;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,9 +20,9 @@ public class CreateRetailFileRequest {
     @JsonProperty("file_name")
     private String fileName;
 
-    @NotBlank(message = "File URL is required")
-    @Size(max = 500, message = "File URL cannot exceed 500 characters")
-    @ValidUrl
+    @NotBlank(message = "Object key is required")
+    @Size(max = 500, message = "Object key cannot exceed 500 characters")
+    @ValidObjectKey
     @JsonProperty("file_url")
     private String fileUrl;
 
@@ -29,6 +30,7 @@ public class CreateRetailFileRequest {
     private Long fileSize;
 
     @JsonProperty("upload_date")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss[XXX]")
     private LocalDateTime uploadDate; // Optional - will default to now if not provided
 
     private FileProcessingStatus status = FileProcessingStatus.PENDING;

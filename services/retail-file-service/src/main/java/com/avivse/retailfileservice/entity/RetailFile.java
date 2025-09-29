@@ -2,7 +2,7 @@ package com.avivse.retailfileservice.entity;
 
 import com.avivse.retailfileservice.enums.FileProcessingStatus;
 import com.avivse.retailfileservice.validation.ValidFileType;
-import com.avivse.retailfileservice.validation.ValidUrl;
+import com.avivse.retailfileservice.validation.ValidObjectKey;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -40,9 +40,9 @@ public class RetailFile {
     @JsonProperty("file_name")
     private String fileName;
 
-    @NotBlank(message = "File URL is required")
-    @Size(max = 500, message = "File URL cannot exceed 500 characters")
-    @ValidUrl
+    @NotBlank(message = "Object key is required")
+    @Size(max = 500, message = "Object key cannot exceed 500 characters")
+    @ValidObjectKey
     @Column(name = "file_url", nullable = false, length = 500)
     @JsonProperty("file_url")
     private String fileUrl;
@@ -74,7 +74,7 @@ public class RetailFile {
     // Constructor with required fields
     public RetailFile(String fileName, String fileUrl, LocalDateTime uploadDate) {
         this.fileName = fileName;
-        this.fileUrl = fileUrl;
+        this.fileUrl = fileUrl; // Now stores object key instead of full URL
         this.uploadDate = uploadDate;
         this.status = FileProcessingStatus.PENDING;
     }

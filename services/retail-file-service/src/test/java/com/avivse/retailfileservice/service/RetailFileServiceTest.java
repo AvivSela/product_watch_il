@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -54,7 +55,7 @@ class RetailFileServiceTest {
         testRetailFile = new RetailFile();
         testRetailFile.setId(testId);
         testRetailFile.setFileName("test_file.csv");
-        testRetailFile.setFileUrl("https://example.com/test_file.csv");
+        testRetailFile.setFileUrl("retail-files/test_file.csv");
         testRetailFile.setFileSize(1024L);
         testRetailFile.setUploadDate(LocalDateTime.of(2024, 1, 15, 10, 30));
         testRetailFile.setStatus(FileProcessingStatus.PENDING);
@@ -64,7 +65,7 @@ class RetailFileServiceTest {
         // Create test CreateRetailFileRequest
         createRequest = new CreateRetailFileRequest();
         createRequest.setFileName("test_file.csv");
-        createRequest.setFileUrl("https://example.com/test_file.csv");
+        createRequest.setFileUrl("retail-files/test_file.csv");
         createRequest.setFileSize(1024L);
         createRequest.setUploadDate(LocalDateTime.of(2024, 1, 15, 10, 30));
         createRequest.setStatus(FileProcessingStatus.PENDING);
@@ -81,6 +82,10 @@ class RetailFileServiceTest {
 
         // Manually create the service with mocked dependencies
         retailFileService = new RetailFileService(retailFileRepository, storeServiceClient, meterRegistry);
+
+        // Set S3 configuration values using reflection
+        ReflectionTestUtils.setField(retailFileService, "s3Endpoint", "http://localhost:9000");
+        ReflectionTestUtils.setField(retailFileService, "s3Bucket", "retail-files");
     }
 
     @Test
@@ -250,5 +255,35 @@ class RetailFileServiceTest {
         // Then
         assertTrue(result);
         verify(retailFileRepository, times(1)).existsById(testId);
+    }
+
+    @Test
+    void generateFileUrl_ShouldGenerateCorrectUrl_WhenValidObjectKey() {
+        // Given
+        String objectKey = "retail-files/test_file.csv";
+
+        // When
+        String result = retailFileService.generateFileUrl(objectKey);
+
+        // Then
+        assertEquals("http://localhost:9000/retail-files/retail-files/test_file.csv", result);
+    }
+
+    @Test
+    void generateFileUrl_ShouldReturnNull_WhenObjectKeyIsNull() {
+        // When
+        String result = retailFileService.generateFileUrl(null);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    void generateFileUrl_ShouldReturnNull_WhenObjectKeyIsEmpty() {
+        // When
+        String result = retailFileService.generateFileUrl("");
+
+        // Then
+        assertNull(result);
     }
 }
