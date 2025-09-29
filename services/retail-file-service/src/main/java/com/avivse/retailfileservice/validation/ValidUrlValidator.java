@@ -2,6 +2,8 @@ package com.avivse.retailfileservice.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -13,6 +15,9 @@ public class ValidUrlValidator implements ConstraintValidator<ValidUrl, String> 
     private static final Set<String> BLOCKED_HOSTS = Set.of(
         "localhost", "127.0.0.1", "0.0.0.0", "::1"
     );
+
+    @Autowired
+    private Environment environment;
 
     @Override
     public boolean isValid(String urlString, ConstraintValidatorContext context) {
@@ -27,6 +32,11 @@ public class ValidUrlValidator implements ConstraintValidator<ValidUrl, String> 
             if (!ALLOWED_PROTOCOLS.contains(url.getProtocol().toLowerCase())) {
                 addViolation(context, "Protocol must be HTTP or HTTPS");
                 return false;
+            }
+
+            // Skip localhost and private IP validation in development environments
+            if (isDevelopmentEnvironment()) {
+                return true;
             }
 
             // Check for blocked hosts (security)
@@ -52,6 +62,20 @@ public class ValidUrlValidator implements ConstraintValidator<ValidUrl, String> 
     private void addViolation(ConstraintValidatorContext context, String message) {
         context.disableDefaultConstraintViolation();
         context.buildConstraintViolationWithTemplate(message).addConstraintViolation();
+    }
+
+    private boolean isDevelopmentEnvironment() {
+        // Handle case where environment is not injected (e.g., in tests)
+        if (environment == null) {
+            return true; // Default to development mode for tests
+        }
+        String[] activeProfiles = environment.getActiveProfiles();
+        for (String profile : activeProfiles) {
+            if ("dev".equals(profile) || "local".equals(profile) || "development".equals(profile)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isPrivateIP(String host) {

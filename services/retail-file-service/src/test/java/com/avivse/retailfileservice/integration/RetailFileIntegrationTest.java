@@ -6,6 +6,7 @@ import com.avivse.retailfileservice.dto.UpdateRetailFileRequest;
 import com.avivse.retailfileservice.entity.RetailFile;
 import com.avivse.retailfileservice.enums.FileProcessingStatus;
 import com.avivse.retailfileservice.repository.RetailFileRepository;
+import com.avivse.retailfileservice.service.RetailFileService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -33,7 +34,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
         "spring.datasource.url=jdbc:h2:mem:testdb",
-        "spring.jpa.hibernate.ddl-auto=create-drop"
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "app.storage.s3.endpoint=http://localhost:9000",
+        "app.storage.s3.bucket=retail-files"
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class RetailFileIntegrationTest {
@@ -43,6 +46,9 @@ class RetailFileIntegrationTest {
 
     @Autowired
     private RetailFileRepository retailFileRepository;
+
+    @Autowired
+    private RetailFileService retailFileService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -55,7 +61,7 @@ class RetailFileIntegrationTest {
         retailFileRepository.deleteAll();
 
         // Mock store service client to return a UUID for any chainId and storeNumber
-        when(storeServiceClient.getOrCreateStoreId("CHAIN001", 123))
+        when(storeServiceClient.getOrCreateStoreId(anyString(), anyInt()))
                 .thenReturn(UUID.randomUUID());
     }
 
@@ -65,7 +71,7 @@ class RetailFileIntegrationTest {
         // Given
         CreateRetailFileRequest request = new CreateRetailFileRequest();
         request.setFileName("integration_test.csv");
-        request.setFileUrl("https://example.com/integration_test.csv");
+        request.setFileUrl("retail-files/integration_test.csv");
         request.setFileSize(1024L);
         request.setUploadDate(LocalDateTime.of(2024, 1, 15, 10, 30));
         request.setStatus(FileProcessingStatus.PENDING);
@@ -98,9 +104,9 @@ class RetailFileIntegrationTest {
     @Transactional
     void listRetailFiles_ShouldApplyFilters() throws Exception {
         // Given
-        createTestFile("file1.csv", FileProcessingStatus.PENDING);
-        createTestFile("file2.csv", FileProcessingStatus.COMPLETED);
-        createTestFile("file3.csv", FileProcessingStatus.PENDING);
+        createTestFile("file1.csv", FileProcessingStatus.PENDING, "CHAIN001", 123);
+        createTestFile("file2.csv", FileProcessingStatus.COMPLETED, "CHAIN001", 124);
+        createTestFile("file3.csv", FileProcessingStatus.PENDING, "CHAIN002", 125);
 
         // When & Then - Filter by chainId
         mockMvc.perform(get("/api/v1/retail-files")
@@ -155,7 +161,7 @@ class RetailFileIntegrationTest {
     @Transactional
     void deleteRetailFile_ShouldRemoveFromDatabase() throws Exception {
         // Given
-        RetailFile file = createTestFile("delete_test.csv", FileProcessingStatus.PENDING);
+        RetailFile file = createTestFile("delete_test.csv", FileProcessingStatus.PENDING, "CHAIN001", 123);
         UUID fileId = file.getId();
 
         // When
@@ -166,15 +172,65 @@ class RetailFileIntegrationTest {
         assertFalse(retailFileRepository.existsById(fileId));
     }
 
+    @Test
+    @Transactional
+    void createRetailFile_WithDuplicateChecksum_ShouldReturn409Conflict() throws Exception {
+        // Given - Create first file with checksum
+        String duplicateChecksum = "abc123def456";
+        CreateRetailFileRequest firstRequest = new CreateRetailFileRequest();
+        firstRequest.setFileName("first_file.csv");
+        firstRequest.setFileUrl("retail-files/first_file.csv");
+        firstRequest.setFileSize(1024L);
+        firstRequest.setChecksum(duplicateChecksum);
+        firstRequest.setChainId("CHAIN001");
+        firstRequest.setStoreNumber(123);
 
-    // Helper method to create test files in database
+        // Create the first file successfully
+        mockMvc.perform(post("/api/v1/retail-files")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(firstRequest)))
+                .andExpect(status().isCreated());
+
+        // When - Try to create second file with same checksum
+        CreateRetailFileRequest duplicateRequest = new CreateRetailFileRequest();
+        duplicateRequest.setFileName("duplicate_file.csv");
+        duplicateRequest.setFileUrl("retail-files/duplicate_file.csv");
+        duplicateRequest.setFileSize(2048L);
+        duplicateRequest.setChecksum(duplicateChecksum); // Same checksum as first file
+        duplicateRequest.setChainId("CHAIN002");
+        duplicateRequest.setStoreNumber(456);
+
+        // Then - Should return 409 Conflict, not 500 Internal Server Error
+        mockMvc.perform(post("/api/v1/retail-files")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(duplicateRequest)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("DUPLICATE_FILE"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Duplicate file detected")));
+    }
+
+
+    // Helper method to create test files using the service layer
+    private RetailFile createTestFile(String fileName, FileProcessingStatus status, String chainId, Integer storeNumber) {
+        CreateRetailFileRequest request = new CreateRetailFileRequest();
+        request.setFileName(fileName);
+        request.setFileUrl("retail-files/" + fileName);
+        request.setFileSize(1024L);
+        request.setUploadDate(LocalDateTime.now());
+        request.setStatus(status);
+        request.setChainId(chainId);
+        request.setStoreNumber(storeNumber);
+
+        // Use the service layer to create the file, which will properly use the mocked StoreServiceClient
+        try {
+            return retailFileService.createRetailFile(request);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create test file", e);
+        }
+    }
+
+    // Keep the old method for backwards compatibility where store info isn't needed
     private RetailFile createTestFile(String fileName, FileProcessingStatus status) {
-        RetailFile file = new RetailFile();
-        file.setFileName(fileName);
-        file.setFileUrl("https://example.com/" + fileName);
-        file.setFileSize(1024L);
-        file.setUploadDate(LocalDateTime.now());
-        file.setStatus(status);
-        return retailFileRepository.save(file);
+        return createTestFile(fileName, status, "CHAIN001", 123);
     }
 }

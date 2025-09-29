@@ -51,7 +51,7 @@ class RetailFileControllerTest {
         testRetailFile = new RetailFile();
         testRetailFile.setId(testId);
         testRetailFile.setFileName("test_file.csv");
-        testRetailFile.setFileUrl("https://example.com/test_file.csv");
+        testRetailFile.setFileUrl("retail-files/test_file.csv");
         testRetailFile.setFileSize(1024L);
         testRetailFile.setUploadDate(LocalDateTime.of(2024, 1, 15, 10, 30));
         testRetailFile.setStatus(FileProcessingStatus.PENDING);
@@ -64,7 +64,7 @@ class RetailFileControllerTest {
         // Given - create request locally since only used in this test
         CreateRetailFileRequest createRequest = new CreateRetailFileRequest();
         createRequest.setFileName("test_file.csv");
-        createRequest.setFileUrl("https://example.com/test_file.csv");
+        createRequest.setFileUrl("retail-files/test_file.csv");
         createRequest.setFileSize(1024L);
         createRequest.setStatus(FileProcessingStatus.PENDING);
         createRequest.setStoreNumber(123);
@@ -90,7 +90,7 @@ class RetailFileControllerTest {
         // Given - create invalid request locally
         CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
         invalidRequest.setFileName(""); // Missing required field
-        invalidRequest.setFileUrl("https://example.com/test_file.csv");
+        invalidRequest.setFileUrl("retail-files/test_file.csv");
         invalidRequest.setStoreNumber(123);
         invalidRequest.setChainId("CHAIN001");
 
@@ -255,7 +255,7 @@ class RetailFileControllerTest {
         // Given
         CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
         invalidRequest.setFileName("test_file.csv");
-        invalidRequest.setFileUrl("https://example.com/test_file.csv");
+        invalidRequest.setFileUrl("retail-files/test_file.csv");
         invalidRequest.setFileSize(1024L);
         invalidRequest.setStoreNumber(null); // Missing required field
         invalidRequest.setChainId("CHAIN001");
@@ -274,7 +274,7 @@ class RetailFileControllerTest {
         // Given
         CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
         invalidRequest.setFileName("test_file.csv");
-        invalidRequest.setFileUrl("https://example.com/test_file.csv");
+        invalidRequest.setFileUrl("retail-files/test_file.csv");
         invalidRequest.setFileSize(1024L);
         invalidRequest.setStoreNumber(123);
         invalidRequest.setChainId(null); // Missing required field
@@ -293,7 +293,7 @@ class RetailFileControllerTest {
         // Given
         CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
         invalidRequest.setFileName("test_file.csv");
-        invalidRequest.setFileUrl("https://example.com/test_file.csv");
+        invalidRequest.setFileUrl("retail-files/test_file.csv");
         invalidRequest.setFileSize(1024L);
         invalidRequest.setStoreNumber(123);
         invalidRequest.setChainId("CHAIN_ID_TOO_LONG_EXCEEDS_20_CHARS"); // Exceeds 20 characters
@@ -312,7 +312,7 @@ class RetailFileControllerTest {
         // Given
         CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
         invalidRequest.setFileName("test_file.csv");
-        invalidRequest.setFileUrl("https://example.com/test_file.csv");
+        invalidRequest.setFileUrl("retail-files/test_file.csv");
         invalidRequest.setFileSize(1024L);
         // storeNumber not set (null)
         invalidRequest.setChainId("CHAIN001");
@@ -331,7 +331,7 @@ class RetailFileControllerTest {
         // Given
         CreateRetailFileRequest invalidRequest = new CreateRetailFileRequest();
         invalidRequest.setFileName("test_file.csv");
-        invalidRequest.setFileUrl("https://example.com/test_file.csv");
+        invalidRequest.setFileUrl("retail-files/test_file.csv");
         invalidRequest.setFileSize(1024L);
         invalidRequest.setStoreNumber(123);
         // chainId not set (null)

@@ -35,10 +35,10 @@ spring:
 # Logging Configuration
 logging:
   level:
-    com.avivse.storeservice: INFO     # Changed from DEBUG to reduce noise
-    org.springframework.web: INFO     # Changed from DEBUG to reduce noise
+    com.avivse.storeservice: DEBUG     # Changed from DEBUG to reduce noise
+    org.springframework.web: DEBUG     # Changed from DEBUG to reduce noise
     org.hibernate.SQL: DEBUG          # SQL queries
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # SQL parameters
+    org.hibernate.type.descriptor.sql.BasicBinder: DEBUG  # SQL parameters
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 

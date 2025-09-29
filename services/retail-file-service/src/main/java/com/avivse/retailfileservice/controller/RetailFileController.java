@@ -17,7 +17,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 
 @Tag(name = "Retail Files", description = "Operations for managing retail file records")
 @RestController
@@ -38,7 +41,8 @@ public class RetailFileController {
     @Operation(summary = "Create a new retail file record", description = "Creates a new retail file record in the system")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "File record created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input data")
+            @ApiResponse(responseCode = "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "409", description = "Duplicate file detected")
     })
     @PostMapping
     public ResponseEntity<RetailFile> createRetailFile(@Valid @RequestBody CreateRetailFileRequest request) {

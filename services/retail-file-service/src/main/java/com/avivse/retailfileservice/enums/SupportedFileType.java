@@ -11,7 +11,8 @@ public enum SupportedFileType {
     XLS("xls", "application/vnd.ms-excel"),
     JSON("json", "application/json"),
     XML("xml", "application/xml"),
-    TXT("txt", "text/plain");
+    TXT("txt", "text/plain"),
+    GZ("gz", "application/gzip");
 
     private final String extension;
     private final String mimeType;

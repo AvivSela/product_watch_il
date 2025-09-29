@@ -10,6 +10,7 @@ import com.avivse.retailfileservice.repository.RetailFileRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +34,12 @@ public class RetailFileService {
     private final StoreServiceClient storeServiceClient;
     private final Counter filesCreatedCounter;
     private final Counter duplicateFilesCounter;
+
+    @Value("${app.storage.s3.endpoint}")
+    private String s3Endpoint;
+
+    @Value("${app.storage.s3.bucket}")
+    private String s3Bucket;
 
     @Autowired
     public RetailFileService(RetailFileRepository retailFileRepository,
@@ -62,10 +69,13 @@ public class RetailFileService {
             checksum = generateChecksumFromUrl(request.getFileUrl());
         }
 
-        // Check for duplicates by checksum if available
-        if (checksum != null && retailFileRepository.existsByChecksum(checksum)) {
-            duplicateFilesCounter.increment();
-            throw new IllegalArgumentException("Duplicate file detected: file with same checksum already exists");
+        // Check for duplicates by checksum if available - use findByChecksum to avoid N+1 queries
+        if (checksum != null) {
+            Optional<RetailFile> existingFile = retailFileRepository.findByChecksum(checksum);
+            if (existingFile.isPresent()) {
+                duplicateFilesCounter.increment();
+                throw new IllegalArgumentException("Duplicate file detected: file with same checksum already exists (existing file ID: " + existingFile.get().getId() + ")");
+            }
         }
 
         // Get or create store ID using store service
@@ -181,7 +191,10 @@ public class RetailFileService {
      */
     @Transactional(readOnly = true)
     public boolean isDuplicateFileByChecksum(String checksum) {
-        return checksum != null && retailFileRepository.existsByChecksum(checksum);
+        if (checksum == null) {
+            return false;
+        }
+        return retailFileRepository.findByChecksum(checksum).isPresent();
     }
 
     /**
@@ -204,12 +217,22 @@ public class RetailFileService {
     }
 
     /**
-     * Generate SHA-256 checksum from URL (simplified for metadata-based checksum)
+     * Generate full S3 URL from object key
      */
-    private String generateChecksumFromUrl(String url) {
+    public String generateFileUrl(String objectKey) {
+        if (objectKey == null || objectKey.trim().isEmpty()) {
+            return null;
+        }
+        return String.format("%s/%s/%s", s3Endpoint, s3Bucket, objectKey.trim());
+    }
+
+    /**
+     * Generate SHA-256 checksum from object key (simplified for metadata-based checksum)
+     */
+    private String generateChecksumFromUrl(String objectKey) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(url.getBytes(StandardCharsets.UTF_8));
+            byte[] hash = digest.digest(objectKey.getBytes(StandardCharsets.UTF_8));
             StringBuilder hexString = new StringBuilder();
             for (byte b : hash) {
                 String hex = Integer.toHexString(0xff & b);
